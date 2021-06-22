@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+
+'use strict';
+const resolve = require('path').resolve;
+const fs = require('fs');
+
+const apiSpecConverter = require('api-spec-converter');
+// convert from endpoint
+apiSpecConverter.convert({
+    from: 'openapi_3',
+    to: 'swagger_2',
+    source: 'http://localhost:8080/v3/api-docs',
+
+}).then(function (converted) {
+    //then write result to file
+    fs.writeFile('converted_swagger_v2.0.yaml', JSON.stringify(converted), function (err) {
+        if (err) return console.log(err);
+        console.log(`OutputFile ${JSON.stringify(converted)}`);
+    });
+});
+
+//TODO: maybe combine the api convert & yaml merge.. but are we disecting the converted swagger before merging?
+// - if so any logic to it?
+
+
+
+
