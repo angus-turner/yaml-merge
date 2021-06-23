@@ -1,0 +1,5585 @@
+swagger: '2.0'
+info:
+  x-ibm-name: PaymentsHub_ISO20022
+  title: PaymentsHub_ISO20022
+  version: 3.0.0
+  description: |
+    This API manages operations relating to customer payments.
+    You can use the Payments Hub to make, cancel, and reverse payments and to retrieve status reports and other information relating to payments.
+    All operations use the message formats defined in the ISO 20022 specification:
+    https://www.iso20022.org
+  contact:
+    name: Payments Hub
+    email: PaymentsHub@Santander.co.uk
+    url: https://confluence.almuk.santanderuk.corp/display/PAYMENTSHU/Payments+Hub+Home
+  license:
+    name: Copyright
+    url: 'https://www.santander.co.uk/uk/website-legal'
+schemes:
+  - https
+host: $(catalog.host)
+basePath: /payments
+consumes:
+  - application/json; charset=utf-8
+produces:
+  - application/json; charset=utf-8
+securityDefinitions:
+  X-Santander-Client-Id:
+    type: apiKey
+    in: header
+    name: X-Santander-Client-Id
+    description: REQUIRED Header. This is the value of the client identifier issued to the client during the application registration process.
+  oauth2:
+    type: oauth2
+    description: OAuth Grant type, JWT Profile
+    flow: implicit
+    scopes:
+      makePayments: Default scope
+    authorizationUrl: $(authorization-url)
+    x-tokenIntrospect:
+      url: $(sca-security-url)
+security:
+  - X-Santander-Client-Id: []
+    oauth2:
+      - makePayments
+parameters:
+  X-Santander-Client-Id:
+    name: X-Santander-Client-Id
+    type: string
+    required: true
+    in: header
+    description: Client ID header
+    x-example: a1b30a84-7bf3-442e-84a0-e935d8163b5a
+  Authorization:
+    in: header
+    name: Authorization
+    type: string
+    required: true
+    description: 'OAuth access token as per https://tools.ietf.org/html/rfc6750'
+  SCAToken:
+    in: header
+    name: sca-token
+    type: string
+    required: true
+    description: 'JWT token for payload validation'
+  PaymentsHubId:
+    name: paymentsHubId
+    in: path
+    description: Unique identification as assigned by the Payments Hub to uniquely identify the payment submission resource.
+    required: true
+    type: string
+  X-B3-TraceId:
+    name: X-B3-TraceId
+    type: string
+    required: false
+    in: header
+    description: |
+      Overall ID of the trace, shared by every span in the trace.
+      The value is 64 or 128 bits long.
+    x-example: 80f198ee56343ba864fe8b2a57d3eff7
+  X-B3-ParentSpanId:
+    name: X-B3-ParentSpanId
+    type: string
+    required: false
+    in: header
+    description: |
+      Position of the parent operation in the trace tree. The value is 64 bits long. The value is omitted when the span is the root of the trace tree. 
+    x-example: 05e3ac9a4f6e3b90
+  X-B3-SpanId:
+    name: X-B3-SpanId
+    type: string
+    required: false
+    in: header
+    description: |
+      Position of the current operation in the trace tree.
+      The value is 64 bits long.
+      Do not interpret the value; it may or may not be derived from the value of the TraceId.
+    x-example: e457b5a2e4d86bd1
+  X-B3-Sampled:
+    name: X-B3-Sampled
+    type: string
+    required: false
+    in: header
+    description: |
+      Sampling decision. Sampling is a mechanism to reduce the volume of data in the tracing system. 
+      In B3, sampling applies consistently per-trace: once the sampling decision is made, the same value must be consistently sent downstream. 
+      This means that either all or no spans share a trace ID. 
+    x-example: 1
+  X-Santander-Consumer:
+    name: X-Santander-Consumer
+    type: string
+    required: false
+    in: header
+    description: |
+      Consumer Id for checking ownership of payments
+responses:
+  400ErrorResponse:
+    description: Bad request
+  401ErrorResponse:
+    description: Unauthorized
+  403ErrorResponse:
+    description: Forbidden
+  404ErrorResponse:
+    description: Not found
+  415ErrorResponse:
+    description: Unsupported media type
+  500ErrorResponse:
+    description: Internal server error
+  503ErrorResponse:
+    description: Service unavailable
+  504ErrorResponse:
+    description: Gateway timeout
+paths:
+  /pain001/v03:
+    post:
+      tags:
+        - Payments
+      summary: Creates a credit transfer to make a payment (pain001/v03).
+      description: Creates a credit transfer to make a payment using the pain.001.001.03 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/SCAToken'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - name: body
+          in: body
+          required: true
+          description: pain.001.001.03 message
+          schema:
+            example:
+              cstmrCdtTrfInitn:
+                grpHdr:
+                  msgId: UUID
+                  creDtTm: '2018-11-30T14:40:13.608'
+                  nbOfTxs: '1'
+                  initgPty: {}
+                pmtInf:
+                  - pmtInfId: UUID
+                    pmtMtd: CHK
+                    reqdExctnDt:
+                      dtTm: '2018-11-30T14:40:13.611'
+                    dbtrAcct:
+                      id:
+                        iban: FI8948830010001760
+                    dbtrAgt:
+                      finInstnId:
+                        bic: HELSFIHH
+                    cdtTrfTxInf:
+                      - pmtId:
+                          endToEndId: AY090327/456
+                        amt:
+                          instdAmt:
+                            value: 10
+                            ccy: GBP
+                        cdtrAcct:
+                          id:
+                            iban: FI8431321000001167
+                        cdtrAgt:
+                          finInstnId:
+                            bic: HANDFIHH
+                        rmtInf:
+                          ustrd:
+                            - Debtor reference
+      responses:
+        '200':
+          description: OK\n\nThe operation is idempotent, and the same payment has been submitted successfully previously.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created\n\nPayment has been submitted successfully.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pain001/v03/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves credit transfer details (pain001/v03).
+      description: |
+        Retrieves  details of a credit transfer using the pain.001.001.003 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment details have been retrieved successfully.
+          schema:
+            example:
+              cstmrCdtTrfInitn:
+                grpHdr:
+                  msgId: UUID
+                  creDtTm: '2018-11-30T14:40:13.608'
+                  nbOfTxs: '1'
+                  initgPty: {}
+                pmtInf:
+                  - pmtInfId: UUID
+                    pmtMtd: CHK
+                    reqdExctnDt:
+                      dtTm: '2018-11-30T14:40:13.611'
+                    dbtrAcct:
+                      id:
+                        iban: FI8948830010001760
+                    dbtrAgt:
+                      finInstnId:
+                        bic: HELSFIHH
+                    cdtTrfTxInf:
+                      - pmtId:
+                          endToEndId: AY090327/456
+                        amt:
+                          instdAmt:
+                            value: 10
+                            ccy: GBP
+                        cdtrAcct:
+                          id:
+                            iban: FI8431321000001167
+                        cdtrAgt:
+                          finInstnId:
+                            bic: HANDFIHH
+                        rmtInf:
+                          ustrd:
+                            - Debtor reference
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pain002/v03/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves a payment status report (pain002/v03).
+      description: |
+        Retrieves a payment status report using the pain.002.001.03 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment status has been retrieved successfully.
+          schema:
+            example:
+              cstmrPmtStsRpt:
+                grpHdr:
+                  msgId: '7593485798759275'
+                  creDtTm: '2019-12-12T15:52:33.001'
+                orgnlGrpInfAndSts:
+                  orgnlMsgId: '7593485798759275'
+                  orgnlMsgNmId: pain.001.001.03
+                orgnlPmtInfAndSts:
+                  - orgnlPmtInfId: My pain.001
+                    pmtInfSts: PDNG
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs002/v09/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves a payment status report (pacs002/v09).
+      description: |
+        Retrieves a payment status report using the pacs.002.001.09 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment status has been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_002_001_09'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs002/v10/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves a payment status report (pacs002/v10).
+      description: |
+        Retrieves a payment status report using the pacs.002.001.10 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment status has been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_002_001_10'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs003/v07/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves direct debit details (pacs003/v07).
+      description: |
+        Retrieves details of a direct debit using the pacs.003.001.07 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment details have been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_003_001_07'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs004/v08:
+    post:
+      tags:
+        - Payments
+      summary: Creates a payment return request (pacs004/v08).
+      description: |
+        Requests a payment return using the pacs.004.001.08 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/SCAToken'
+        - in: body
+          name: pacs004
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.004.001.008 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_pacs_004_001_08'
+      responses:
+        '200':
+          description: OK\n\nThe operation is idempotent, and the same payment return request has been submitted successfully previously.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created\n\nPayment return request has been submitted successfully.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs004/v08/{paymentsHubId}:
+    get:
+      tags:
+        - Payments
+      summary: Retrieves payment return details (pacs004/v08).
+      description: |
+        Retrieves details of a payment return using the pacs.004.001.08 message format.
+        To send this request, you must provide the Payments Hub ID of the payment return in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment return details have been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_004_001_08'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs007/v08/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves payment reversal details (pacs007/v08).
+      description: |
+        Retrieves details of a payment reversal using the pacs.007.001.08 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment reversal details have been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_007_001_08'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs007/v08:
+    post:
+      tags:
+        - Payments
+      summary: Reverses a payment (pacs007/v08).
+      description: |
+        Reverses a payment using the pacs.007.001.08 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/SCAToken'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - in: body
+          name: pacs007
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.007.001.008 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_pacs_007_001_08'
+      responses:
+        '200':
+          description: OK\n\nThe operation is idempotent, and the same payment reversal has been submitted successfully previously.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created\n\nPayment reversal has been submitted successfully.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs008/v07:
+    post:
+      tags:
+        - Payments
+      summary: Creates a credit transfer to make a payment (pacs008/v07).
+      description: Creates a credit transfer to make a payment using the pacs.008.001.07 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/SCAToken'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - in: body
+          name: pacs008
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.008.001.007 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_pacs_008_001_07'
+      responses:
+        '200':
+          description: OK\n\nThe operation is idempotent, and the same payment has been submitted successfully previously.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created\n\nPayment has been submitted successfully.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs008/v07/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves credit transfer details (pacs008/v07).
+      description: |
+        Retrieves  details of a credit transfer using the pacs.008.001.07 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment details have been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_008_001_07'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs008/v08:
+    post:
+      tags:
+        - Payments
+      summary: Creates a credit transfer to make a payment (pacs008/v08).
+      description: Creates a credit transfer to make a payment using the pacs.008.001.08 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/SCAToken'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - in: body
+          name: pacs008
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.008.001.008 rules
+          required: true
+          schema:
+            $ref: "#/definitions/Document_pacs_008_001_08"
+      responses:
+        '200':
+          description: OK\n\nThe operation is idempotent, and the same payment has been submitted successfully previously.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created\n\nPayment has been submitted successfully.
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs008/v08/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves credit transfer details (pacs008/v08).
+      description: |
+        Retrieves details of a credit transfer using the pacs.008.001.08 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK\n\nPayment details have been retrieved successfully.
+          schema:
+            $ref: '#/definitions/Document_pacs_008_001_08'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs009/v08:
+    post:
+      tags:
+        - Payments
+      summary: Creates a credit transfer to make a payment (pacs009/v08).
+      description: Creates a credit transfer to make a payment using the pacs.009.001.08 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/SCAToken'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - in: body
+          name: pacs009
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.009.001.08 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_pacs_009_001_08'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  '/pacs009/v08/{paymentsHubId}':
+    get:
+      tags:
+        - Payments
+      summary: Retrieves credit transfer details (pacs009/v08).
+      description: |
+        Retrieves  details of a credit transfer using the pacs.009.001.08 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Document_pacs_009_001_08'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs028/v01:
+    post:
+      tags:
+        - Payments
+      summary: Creates a request to verify the status of a payment (pacs028/v01)
+      description: Creates a request to verify the status of a payment using the pacs.028.001.01 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/X-Santander-Consumer'
+        - $ref: '#/parameters/SCAToken'
+        - in: body
+          name: pacs028
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.028.001.01 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_pacs_028_001_01'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs028/v01/{paymentsHubId}:
+    get:
+      tags:
+        - Payments
+      summary: Retrieves payment status verification (pacs028/v01).
+      description: |
+        Retrieves payment status verification using the pacs.028.001.01 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Document_pacs_028_001_01'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /camt027/v06:
+    post:
+      tags:
+        - Payments
+      summary: Creates a claim of payment not received (camt027/v06)
+      description: |
+        Creates a claim of payment not received using the camt.027.001.06 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/X-Santander-Consumer'
+        - $ref: '#/parameters/SCAToken'
+        - in: body
+          name: camt056
+          description: Document following [ISO20022](https://www.iso20022.org) camt.027.001.06 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_camt_027_001_06'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /camt027/v06/{paymentsHubId}:
+    get:
+      tags:
+        - Payments
+      summary: Retrieves a request to investigate a claim of non-receipt (camt027/v06).
+      description: |
+        Retrieves a request to investigate a claim of non-receipt using the camt.027.001.06 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/X-Santander-Consumer'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Document_camt_027_001_06'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /camt056/v08:
+    post:
+      tags:
+        - Payments
+      summary: Creates a request to cancel a payment (camt056/v08)
+      description: |
+        Creates a request to cancel a payment using the camt.056.001.08 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/X-Santander-Consumer'
+        - $ref: '#/parameters/SCAToken'
+        - in: body
+          name: camt056
+          description: Document following [ISO20022](https://www.iso20022.org) camt.056.001.08 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_camt_056_001_08'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /camt056/v08/{paymentsHubId}:
+    get:
+      tags:
+        - Payments
+      summary: Retrieves a request to cancel a payment (camt056/v08).
+      description: |
+        Retrieves a request to cancel a payment using the camt.056.001.08 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/X-Santander-Consumer'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Document_camt_056_001_08'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /camt087/v05:
+    post:
+      tags: 
+        - Payments
+      summary: Creates a request to modify a payment (camt087/v05).
+      description: |
+        Creates a request to modify the date of a payment using the camt.087.001.05 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/SCAToken'
+        - in: body
+          name: camt087
+          description: Document following [ISO20022](https://www.iso20022.org) camt.087.001.05 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_camt_087_001_05'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/ISOPostResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /camt087/v05/{paymentsHubId}:
+    get:
+      tags:
+        - Payments
+      summary: Retrieves a request to modify a payment (camt087/v05).
+      description: |
+        Retrieves a request to modify the date of a payment using the camt.087.001.05 message format.
+        To send this request, you must provide the Payments Hub ID of the payment in the request path.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/PaymentsHubId'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - $ref: '#/parameters/X-Santander-Consumer'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Document_camt_087_001_05'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+  /pacs009/v08/simulation:
+    post:
+      tags:
+        - Simulations
+      summary: Simulates a credit transfer for a payment (pacs009/v08).
+      description: Simulates a credit transfer for a payment using the pacs.009.001.08 message format.
+      parameters:
+        - $ref: '#/parameters/X-Santander-Client-Id'
+        - $ref: '#/parameters/Authorization'
+        - $ref: '#/parameters/SCAToken'
+        - $ref: '#/parameters/X-B3-TraceId'
+        - $ref: '#/parameters/X-B3-ParentSpanId'
+        - $ref: '#/parameters/X-B3-SpanId'
+        - $ref: '#/parameters/X-B3-Sampled'
+        - in: body
+          name: pacs009
+          description: Document following [ISO20022](https://www.iso20022.org) pacs.009.001.08 rules
+          required: true
+          schema:
+            $ref: '#/definitions/Document_pacs_009_001_08'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ISOSimulationResponse'
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '401':
+          $ref: '#/responses/401ErrorResponse'
+        '403':
+          $ref: '#/responses/403ErrorResponse'
+        '404':
+          $ref: '#/responses/404ErrorResponse'
+        '415':
+          $ref: '#/responses/415ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '503':
+          $ref: '#/responses/503ErrorResponse'
+        '504':
+          $ref: '#/responses/504ErrorResponse'
+definitions:
+  Payment:
+    title: Payment request payload
+    description: Payment request payload containing information about type and version of the ISO 20022 message payload.
+    additionalProperties: false
+    required:
+      - header
+      - data
+    properties:
+      header:
+        $ref: '#/definitions/Header'
+      data:
+        title: ISO 20022 payload
+        additionalProperties: false
+        required:
+          - fitoFICstmrCdtTrf
+        properties:
+          fitoFICstmrCdtTrf:
+            $ref: '#/definitions/FIToFICustomerCreditTransferV07'
+  Header:
+    title: ISO 20022 metadata
+    additionalProperties: false
+    required:
+      - type
+      - version
+    description: Version and type of the ISO 20022 payload message.
+    properties:
+      type:
+        type: string
+        example: pacs.008.001
+      version:
+        type: string
+        example: '07'
+  StructuredRemittanceInformation16:
+    title: StructuredRemittanceInformation16
+    type: object
+    properties:
+      addtlRmtInf:
+        type: array
+        items:
+          type: string
+      cdtrRefInf:
+        $ref: '#/definitions/CreditorReferenceInformation2'
+      grnshmtRmt:
+        $ref: '#/definitions/Garnishment3'
+      invcee:
+        $ref: '#/definitions/PartyIdentification135'
+      invcr:
+        $ref: '#/definitions/PartyIdentification135'
+      rfrdDocAmt:
+        $ref: '#/definitions/RemittanceAmount2'
+      rfrdDocInf:
+        type: array
+        items:
+          $ref: '#/definitions/ReferredDocumentInformation7'
+      taxRmt:
+        $ref: '#/definitions/TaxInformation7'
+  Garnishment3:
+    title: Garnishment3
+    type: object
+    properties:
+      dt:
+        type: string
+        format: date
+      fmlyMdclInsrncInd:
+        type: boolean
+      grnshee:
+        $ref: '#/definitions/PartyIdentification135'
+      grnshmtAdmstr:
+        $ref: '#/definitions/PartyIdentification135'
+      mplyeeTermntnInd:
+        type: boolean
+      refNb:
+        type: string
+      rmtdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      tp:
+        $ref: '#/definitions/GarnishmentType1'
+  GroupHeader93:
+    title: GroupHeader93
+    type: object
+    properties:
+      btchBookg:
+        type: boolean
+      creDtTm:
+        type: string
+        format: date-time
+      ctrlSum:
+        type: number
+        format: bigdecimal
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      msgId:
+        type: string
+      nbOfTxs:
+        type: string
+      pmtTpInf:
+        $ref: '#/definitions/PaymentTypeInformation28'
+      sttlmInf:
+        $ref: '#/definitions/SettlementInstruction7'
+      ttlIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+  FinancialInstitutionCreditTransferV08:
+      title: FinancialInstitutionCreditTransferV08
+      type: object
+      properties:
+        cdtTrfTxInf:
+          type: array
+          items:
+            $ref: '#/definitions/CreditTransferTransaction36'
+        grpHdr:
+          $ref: '#/definitions/GroupHeader93'
+        splmtryData:
+          type: array
+          items:
+            $ref: '#/definitions/SupplementaryData1'
+  SettlementInstruction7:
+    title: SettlementInstruction7
+    type: object
+    properties:
+      clrSys:
+        $ref: '#/definitions/ClearingSystemIdentification3Choice'
+      instdRmbrsmntAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      instdRmbrsmntAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+      instgRmbrsmntAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      instgRmbrsmntAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+      sttlmAcct:
+        $ref: '#/definitions/CashAccount38'
+      sttlmMtd:
+        type: string
+        enum:
+          - CLRG
+          - COVE
+          - INDA
+          - INGA
+      thrdRmbrsmntAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      thrdRmbrsmntAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+  SettlementInstruction3:
+    type: object
+    properties:
+      instdRmbrsmntAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification5"
+      instdRmbrsmntAgtAcct:
+        $ref: "#/definitions/CashAccount24"
+      instgRmbrsmntAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification5"
+      instgRmbrsmntAgtAcct:
+        $ref: "#/definitions/CashAccount24"
+    title: SettlementInstruction3
+  BranchData3:
+    title: BranchData3
+    type: object
+    properties:
+      id:
+        type: string
+      lei:
+        type: string
+      nm:
+        type: string
+      pstlAdr:
+        $ref: '#/definitions/PostalAddress24'
+  PostalAddress24:
+    title: PostalAddress24
+    type: object
+    properties:
+      adrLine:
+        type: array
+        items:
+          type: string
+      adrTp:
+        $ref: '#/definitions/AddressType3Choice'
+      bldgNb:
+        type: string
+      bldgNm:
+        type: string
+      ctry:
+        type: string
+      ctrySubDvsn:
+        type: string
+      dept:
+        type: string
+      dstrctNm:
+        type: string
+      flr:
+        type: string
+      pstBx:
+        type: string
+      pstCd:
+        type: string
+      room:
+        type: string
+      strtNm:
+        type: string
+      subDept:
+        type: string
+      twnLctnNm:
+        type: string
+      twnNm:
+        type: string
+  PartyIdentification135:
+    title: PartyIdentification135
+    type: object
+    properties:
+      ctctDtls:
+        $ref: '#/definitions/Contact4'
+      ctryOfRes:
+        type: string
+      id:
+        $ref: '#/definitions/Party38Choice'
+      nm:
+        type: string
+      pstlAdr:
+        $ref: '#/definitions/PostalAddress24'
+  RemittanceInformation16:
+    title: RemittanceInformation16
+    type: object
+    properties:
+      strd:
+        type: array
+        items:
+          $ref: '#/definitions/StructuredRemittanceInformation16'
+      ustrd:
+        type: array
+        items:
+          type: string
+  TaxInformation8:
+    title: TaxInformation8
+    type: object
+    properties:
+      admstnZone:
+        type: string
+      cdtr:
+        $ref: '#/definitions/TaxParty1'
+      dbtr:
+        $ref: '#/definitions/TaxParty2'
+      dt:
+        type: string
+        format: date
+      mtd:
+        type: string
+      rcrd:
+        type: array
+        items:
+          $ref: '#/definitions/TaxRecord2'
+      refNb:
+        type: string
+      seqNb:
+        type: number
+        format: bigdecimal
+      ttlTaxAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ttlTaxblBaseAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+  Contact4:
+    title: Contact4
+    type: object
+    properties:
+      dept:
+        type: string
+      emailAdr:
+        type: string
+      emailPurp:
+        type: string
+      faxNb:
+        type: string
+      jobTitl:
+        type: string
+      mobNb:
+        type: string
+      nm:
+        type: string
+      nmPrfx:
+        type: string
+        enum:
+          - DOCT
+          - MADM
+          - MIKS
+          - MISS
+          - MIST
+      othr:
+        type: array
+        items:
+          $ref: '#/definitions/OtherContact1'
+      phneNb:
+        type: string
+      prefrdMtd:
+        type: string
+        enum:
+          - CELL
+          - FAXX
+          - LETT
+          - MAIL
+          - PHON
+      rspnsblty:
+        type: string
+  Party38Choice:
+    title: Party38Choice
+    type: object
+    properties:
+      orgId:
+        $ref: '#/definitions/OrganisationIdentification29'
+      prvtId:
+        $ref: '#/definitions/PersonIdentification13'
+  Party40Choice:
+    type: object
+    properties:
+      agt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      pty:
+        $ref: "#/definitions/PartyIdentification135"
+  GenericIdentification30:
+    title: GenericIdentification30
+    type: object
+    properties:
+      id:
+        type: string
+      issr:
+        type: string
+      schmeNm:
+        type: string
+  OtherContact1:
+    title: OtherContact1
+    type: object
+    properties:
+      chanlTp:
+        type: string
+      id:
+        type: string
+  OrganisationIdentification29:
+    title: OrganisationIdentification29
+    type: object
+    properties:
+      anyBIC:
+        type: string
+      lei:
+        type: string
+      othr:
+        type: array
+        items:
+          $ref: '#/definitions/GenericOrganisationIdentification1'
+  AddressType3Choice:
+    title: AddressType3Choice
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - ADDR
+          - BIZZ
+          - DLVY
+          - HOME
+          - MLTO
+          - PBOX
+      prtry:
+        $ref: '#/definitions/GenericIdentification30'
+  ProxyAccountType1Choice:
+    title: ProxyAccountType1Choice
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+  ProxyAccountIdentification1:
+    title: ProxyAccountIdentification1
+    type: object
+    properties:
+      id:
+        type: string
+      tp:
+        $ref: '#/definitions/ProxyAccountType1Choice'
+  FinancialInstitutionIdentification18:
+    title: FinancialInstitutionIdentification18
+    type: object
+    properties:
+      bicfi:
+        type: string
+      clrSysMmbId:
+        $ref: '#/definitions/ClearingSystemMemberIdentification2'
+      lei:
+        type: string
+      nm:
+        type: string
+      othr:
+        $ref: '#/definitions/GenericFinancialIdentification1'
+      pstlAdr:
+        $ref: '#/definitions/PostalAddress24'
+  CreditTransferTransaction37:
+    title: CreditTransferTransaction37
+    type: object
+    properties:
+      cdtr:
+        $ref: '#/definitions/PartyIdentification135'
+      cdtrAcct:
+        $ref: '#/definitions/CashAccount38'
+      cdtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      cdtrAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+      dbtr:
+        $ref: '#/definitions/PartyIdentification135'
+      dbtrAcct:
+        $ref: '#/definitions/CashAccount38'
+      dbtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      dbtrAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+      initgPty:
+        $ref: '#/definitions/PartyIdentification135'
+      instdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      instrForCdtrAgt:
+        type: array
+        items:
+          $ref: '#/definitions/InstructionForCreditorAgent1'
+      instrForNxtAgt:
+        type: array
+        items:
+          $ref: '#/definitions/InstructionForNextAgent1'
+      intrmyAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrmyAgt1Acct:
+        $ref: '#/definitions/CashAccount38'
+      intrmyAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrmyAgt2Acct:
+        $ref: '#/definitions/CashAccount38'
+      intrmyAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrmyAgt3Acct:
+        $ref: '#/definitions/CashAccount38'
+      prvsInstgAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      prvsInstgAgt1Acct:
+        $ref: '#/definitions/CashAccount38'
+      prvsInstgAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      prvsInstgAgt2Acct:
+        $ref: '#/definitions/CashAccount38'
+      prvsInstgAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      prvsInstgAgt3Acct:
+        $ref: '#/definitions/CashAccount38'
+      rmtInf:
+        $ref: '#/definitions/RemittanceInformation16'
+      tax:
+        $ref: '#/definitions/TaxInformation8'
+      ultmtCdtr:
+        $ref: '#/definitions/PartyIdentification135'
+      ultmtDbtr:
+        $ref: '#/definitions/PartyIdentification135'
+  CreditTransferTransaction39:
+    type: object
+    properties:
+      accptncDtTm:
+        type: string
+        format: date-time
+      cdtr:
+        $ref: "#/definitions/PartyIdentification135"
+      cdtrAcct:
+        $ref: "#/definitions/CashAccount38"
+      cdtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      cdtrAgtAcct:
+        $ref: "#/definitions/CashAccount38"
+      chrgBr:
+        type: string
+        enum:
+        - CRED
+        - DEBT
+        - SHAR
+        - SLEV
+      chrgsInf:
+        type: array
+        items:
+          $ref: "#/definitions/Charges7"
+      dbtr:
+        $ref: "#/definitions/PartyIdentification135"
+      dbtrAcct:
+        $ref: "#/definitions/CashAccount38"
+      dbtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      dbtrAgtAcct:
+        $ref: "#/definitions/CashAccount38"
+      initgPty:
+        $ref: "#/definitions/PartyIdentification135"
+      instdAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      instdAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      instgAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      instrForCdtrAgt:
+        type: array
+        items:
+          $ref: "#/definitions/InstructionForCreditorAgent1"
+      instrForNxtAgt:
+        type: array
+        items:
+          $ref: "#/definitions/InstructionForNextAgent1"
+      intrBkSttlmAmt:
+        $ref: "#/definitions/ActiveCurrencyAndAmount"
+      intrBkSttlmDt:
+        type: string
+        format: date
+      intrmyAgt1:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      intrmyAgt1Acct:
+        $ref: "#/definitions/CashAccount38"
+      intrmyAgt2:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      intrmyAgt2Acct:
+        $ref: "#/definitions/CashAccount38"
+      intrmyAgt3:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      intrmyAgt3Acct:
+        $ref: "#/definitions/CashAccount38"
+      pmtId:
+        $ref: "#/definitions/PaymentIdentification7"
+      pmtTpInf:
+        $ref: "#/definitions/PaymentTypeInformation28"
+      poolgAdjstmntDt:
+        type: string
+        format: date
+      prvsInstgAgt1:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      prvsInstgAgt1Acct:
+        $ref: "#/definitions/CashAccount38"
+      prvsInstgAgt2:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      prvsInstgAgt2Acct:
+        $ref: "#/definitions/CashAccount38"
+      prvsInstgAgt3:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      prvsInstgAgt3Acct:
+        $ref: "#/definitions/CashAccount38"
+      purp:
+        $ref: "#/definitions/Purpose2Choice"
+      rgltryRptg:
+        type: array
+        items:
+          $ref: "#/definitions/RegulatoryReporting3"
+      rltdRmtInf:
+        type: array
+        items:
+          $ref: "#/definitions/RemittanceLocation7"
+      rmtInf:
+        $ref: "#/definitions/RemittanceInformation16"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+      sttlmPrty:
+        type: string
+        enum:
+        - HIGH
+        - NORM
+        - URGT
+      sttlmTmIndctn:
+        $ref: "#/definitions/SettlementDateTimeIndication1"
+      sttlmTmReq:
+        $ref: "#/definitions/SettlementTimeRequest2"
+      tax:
+        $ref: "#/definitions/TaxInformation8"
+      ultmtCdtr:
+        $ref: "#/definitions/PartyIdentification135"
+      ultmtDbtr:
+        $ref: "#/definitions/PartyIdentification135"
+      xchgRate:
+        type: number
+    title: CreditTransferTransaction39
+  RemittanceInformation2:
+    title: RemittanceInformation2
+    type: object
+    properties:
+      ustrd:
+        type: array
+        items:
+          type: string
+  PaymentTypeInformation27:
+    type: object
+    properties:
+      clrChanl:
+        type: string
+        enum:
+        - BOOK
+        - MPNS
+        - RTGS
+        - RTNS
+      ctgyPurp:
+        $ref: "#/definitions/CategoryPurpose1Choice"
+      instrPrty:
+        type: string
+        enum:
+        - HIGH
+        - NORM
+      lclInstrm:
+        $ref: "#/definitions/LocalInstrument2Choice"
+      seqTp:
+        type: string
+        enum:
+        - FNAL
+        - FRST
+        - OOFF
+        - RCUR
+        - RPRE
+      svcLvl:
+        type: array
+        items:
+          $ref: "#/definitions/ServiceLevel8Choice"
+    title: PaymentTypeInformation27
+  PaymentTypeInformation28:
+    title: PaymentTypeInformation28
+    type: object
+    properties:
+      clrChanl:
+        type: string
+        enum:
+          - BOOK
+          - MPNS
+          - RTGS
+          - RTNS
+      ctgyPurp:
+        $ref: '#/definitions/CategoryPurpose1Choice'
+      instrPrty:
+        type: string
+        enum:
+          - HIGH
+          - NORM
+      lclInstrm:
+        $ref: '#/definitions/LocalInstrument2Choice'
+      svcLvl:
+        type: array
+        items:
+          $ref: '#/definitions/ServiceLevel8Choice'
+  PaymentIdentification7:
+    title: PaymentIdentification7
+    type: object
+    properties:
+      clrSysRef:
+        type: string
+      endToEndId:
+        type: string
+      instrId:
+        type: string
+      txId:
+        type: string
+      uetr:
+        type: string
+  CashAccount38:
+    title: CashAccount38
+    type: object
+    properties:
+      ccy:
+        type: string
+      id:
+        $ref: '#/definitions/AccountIdentification4Choice'
+      nm:
+        type: string
+      prxy:
+        $ref: '#/definitions/ProxyAccountIdentification1'
+      tp:
+        $ref: '#/definitions/CashAccountType2Choice'
+  InstructionForCreditorAgent2:
+    title: InstructionForCreditorAgent2
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - PHOB
+          - TELB
+      instrInf:
+        type: string
+  BranchAndFinancialInstitutionIdentification6:
+    title: BranchAndFinancialInstitutionIdentification6
+    type: object
+    properties:
+      brnchId:
+        $ref: '#/definitions/BranchData3'
+      finInstnId:
+        $ref: '#/definitions/FinancialInstitutionIdentification18'
+  CreditTransferTransaction36:
+    title: CreditTransferTransaction36
+    type: object
+    properties:
+      cdtr:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      cdtrAcct:
+        $ref: '#/definitions/CashAccount38'
+      cdtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      cdtrAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+      dbtr:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      dbtrAcct:
+        $ref: '#/definitions/CashAccount38'
+      dbtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      dbtrAgtAcct:
+        $ref: '#/definitions/CashAccount38'
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      instrForCdtrAgt:
+        type: array
+        items:
+          $ref: '#/definitions/InstructionForCreditorAgent2'
+      instrForNxtAgt:
+        type: array
+        items:
+          $ref: '#/definitions/InstructionForNextAgent1'
+      intrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      intrmyAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrmyAgt1Acct:
+        $ref: '#/definitions/CashAccount38'
+      intrmyAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrmyAgt2Acct:
+        $ref: '#/definitions/CashAccount38'
+      intrmyAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      intrmyAgt3Acct:
+        $ref: '#/definitions/CashAccount38'
+      pmtId:
+        $ref: '#/definitions/PaymentIdentification7'
+      pmtTpInf:
+        $ref: '#/definitions/PaymentTypeInformation28'
+      prvsInstgAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      prvsInstgAgt1Acct:
+        $ref: '#/definitions/CashAccount38'
+      prvsInstgAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      prvsInstgAgt2Acct:
+        $ref: '#/definitions/CashAccount38'
+      prvsInstgAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      prvsInstgAgt3Acct:
+        $ref: '#/definitions/CashAccount38'
+      purp:
+        $ref: '#/definitions/Purpose2Choice'
+      rmtInf:
+        $ref: '#/definitions/RemittanceInformation2'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      sttlmPrty:
+        type: string
+        enum:
+          - HIGH
+          - NORM
+          - URGT
+      sttlmTmIndctn:
+        $ref: '#/definitions/SettlementDateTimeIndication1'
+      sttlmTmReq:
+        $ref: '#/definitions/SettlementTimeRequest2'
+      ultmtCdtr:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      ultmtDbtr:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification6'
+      undrlygCstmrCdtTrf:
+        $ref: '#/definitions/CreditTransferTransaction37'
+  FIToFICustomerCreditTransferV07:
+    title: FI To FI Customer Credit Transfer V07
+    additionalProperties: false
+    required:
+      - grpHdr
+      - cdtTrfTxInf
+    properties:
+      grpHdr:
+        $ref: '#/definitions/GroupHeader70'
+      cdtTrfTxInf:
+        type: array
+        minLength: 1
+        items:
+          $ref: '#/definitions/CreditTransferTransaction30'
+  FIToFICustomerCreditTransferV08:
+    type: object
+    title: FIToFICustomerCreditTransferV08
+    properties:
+      cdtTrfTxInf:
+        type: array
+        items:
+          $ref: "#/definitions/CreditTransferTransaction39"
+      grpHdr:
+        $ref: "#/definitions/GroupHeader93"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+  FIToFIPaymentStatusRequestV01:
+    type: object
+    properties:
+      grpHdr:
+        $ref: "#/definitions/GroupHeader53"
+      orgnlGrpInf:
+        type: array
+        items:
+          $ref: "#/definitions/OriginalGroupInformation27"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+      txInf:
+        type: array
+        items:
+          $ref: "#/definitions/PaymentTransaction73"
+    title: FIToFIPaymentStatusRequestV01
+  GroupHeader70:
+    title: Group Header (70)
+    description: Set of characteristics shared by all individual transactions included in the message.
+    additionalProperties: false
+    required:
+      - msgId
+      - creDtTm
+      - nbOfTxs
+      - sttlmInf
+    properties:
+      msgId:
+        type: string
+        title: ISO 20022 Message ID
+        example: '12345678'
+      creDtTm:
+        type: string
+        format: date
+        title: Local date time
+        example: '2018-09-01T00:00:01'
+      nbOfTxs:
+        type: number
+        title: Number of transactions in the message
+        example: 1
+      sttlmInf:
+        additionalProperties: false
+        properties:
+          sttlmMtd:
+            type: string
+            example: INDA
+  PaymentTypeInformation25:
+    title: Payment Type Information
+    description: Set of elements used to provide further details of the type of payment.
+    additionalProperties: false
+    properties:
+      svcLvl:
+        title: Service Level
+        description:  Agreement under which or rules under which the transaction should be  processed.
+        additionalProperties: false
+        required:
+          - prtry
+        properties:
+          prtry:
+            title: Proprietary
+            description:  Specifies a pre-agreed service or level of service between the parties, as a proprietary code. Used to specify the desired scheme in which this payment has to be processed. Without value, PaymentsHub will decide which scheme to use.
+            type: string
+            maxLength: 35
+            enum:
+              - FP
+              - CHAPS
+              - SWIFT
+              - RIPPLE
+              - SEPA
+  CreditTransferTransaction30:
+    title: Credit Transfer Transaction (30)
+    additionalProperties: false
+    properties:
+      pmtId:
+        $ref: '#/definitions/PaymentIdentification3'
+      pmtTpInf:
+        title: Payment Type Information
+        description: Set of elements used to further specify the type of transaction.
+        additionalProperties: false
+        properties:
+          lclInstrm:
+            title: Local Instrument
+            description: User community specific instrument.
+            additionalProperties: false
+            required:
+              - prtry
+            properties:
+              prtry:
+                title: Proprietary
+                description: Specifies the local instrument, as a proprietary code. FPS:Mapped to field 003 (Processing code sub-field-1) 10 = Single Immediate Payment, 20 = Return Payment, 25 = Scheme Return Payment, 30 = Standing Order, 40 = Forward Dated Single Payment, 50 = Corporate Bulk Payment
+                type: string
+                maxLength: 35
+                example: '10'
+          ctgyPurp:
+            title: Category Purpose
+            description: Specifies the high level purpose of the instruction based on a set of pre-defined categories.
+            additionalProperties: false
+            required:
+              - prtry
+            properties:
+              prtry:
+                title: Proprietary
+                description: Category purpose, in a proprietary form. For FPS is Mapped to FPS field 061.1 (Payment Data sub-field 1 - Payment Subtype) with maxLength 3
+                type: string
+                maxLength: 35
+                example: A00
+      intrBkSttlmAmt:
+        allOf:
+          - $ref: '#/definitions/ActiveCurrencyAndAmount'
+          - title: Interbank Settlement Amount
+            description: Amount of money moved between the instructing agent and the instructed agent. For FPS is Mapped to FPS field 006 (Amount). Amount of payment in £ sterling. Mapped to FPS field 051 (Currency). Code of the currency of the payment (always £ sterling)
+      instdAmt:
+        allOf:
+          - $ref: '#/definitions/ActiveCurrencyAndAmount'
+          - title: Instructed Amount
+          - description: Amount of money to be moved between the debtor and creditor, before deduction of charges, expressed in the currency as ordered by the initiating party. This amount has to be transported unchanged through the transaction chain. For FPS is apped to FPS field 004 (Original Amount). Value of the payment in its original currency (Currency code in field 49). Only present where the currency of the original payment differs from that used by the sending FP institution. Mapped to FPS field 049 (Original Currency). Code of the currency in which the payment originated. Only present where the currency of the original payment differs from that used by the sending FP institution. Only required for payments originated in currency other than GBP
+      xchgRate:
+        $ref: '#/definitions/BaseOneRate'
+      chrgBr:
+        title: Charge Bearer
+        description: Specifies which party/parties will bear the charges associated with the processing of the payment transaction. Possible values are DEBT BorneByDebtor, CRED BorneByCreditor, SHAR Shared, SLEV FollowingServiceLevel For FPS is mapped to FPS field 046 (ChargingInformationsub-field 1)
+        type: string
+        enum:
+          - DEBT
+          - CRED
+          - SHAR
+          - SLEV
+        example: SHAR
+      intrmyAgt1:
+        allOf:
+          - $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+          - title: Intermediary Agent 1
+          - description:  Agent between the debtor's agent and the creditor's agent. Used to specify sort code or BIC of Vostro account.
+      intrmyAgt1Acct:
+        allOf:
+          - $ref: '#/definitions/CashAccount24'
+          - title: Intermediary Agent 1 Account
+          - description: Unambiguous identification of the account of the intermediary agent 1 at its servicing agent in the payment chain. Used to specify Vostro account.
+      dbtr:
+        allOf:
+          - $ref: '#/definitions/PartyIdentification125'
+          - title: Debtor
+          - description: Party that owes an amount of money to the (ultimate) creditor.
+      dbtrAcct:
+        allOf:
+          - $ref: '#/definitions/CashAccount24'
+          - title: Debtor Account
+          - description: Unambiguous identification of the account of the debtor to which a debit entry will be made as a result of the transaction.
+      dbtrAgt:
+        allOf:
+          - $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+          - title: Debtor Agent
+          - description: Financial institution servicing an account for the debtor.
+      cdtrAgt:
+        allOf:
+          - $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+          - title: Creditor Agent
+          - description: Financial institution servicing an account for the creditor.
+      cdtr:
+        allOf:
+          - $ref: '#/definitions/PartyIdentification125'
+          - title: Creditor
+          - description: Party to which an amount of money is due.
+      cdtrAcct:
+        allOf:
+          - $ref: '#/definitions/CashAccount24'
+          - title: Creditor Account
+          - description: Unambiguous identification of the account of the creditor to which a credit entry will be posted as a result of the payment transaction.
+      purp:
+        title: Purpose
+        description: Underlying reason for the payment transaction.
+        additionalProperties: false
+        required:
+          - cd
+        properties:
+          cd:
+            title: Code
+            description: Specifies the external purpose code in the format of character string with a maximum length of 4 characters. The list of valid codes is an external code list published separately. For FPS is Mapped to FPS field 061.2 (Payment Data sub-field 2 - Purpose) with maxLength 3
+            type: string
+            maxLength: 4
+      rgltryRptg:
+        type: array
+        description: 'Payments Hub only will process the first element, ignoring the rest.'
+        items:
+          $ref: '#/definitions/RegulatoryReporting3'
+        maxLength: 10
+      rmtInf:
+        $ref: '#/definitions/RemittanceInformation15'
+    required:
+      - pmtId
+      - intrBkSttlmAmt
+      - chrgBr
+      - dbtr
+      - dbtrAgt
+      - cdtrAgt
+      - cdtr
+  PaymentsHubId:
+    description: Unique identification as assigned by the Payments Hub to uniquely identify the payment submission resource.
+    title: Payment Submission Id
+    type: string
+    minLength: 1
+    maxLength: 40
+  PaymentStatus:
+    description: Specifies the status of the payment resource.
+    title: Payment Submission Status Code
+    type: string
+    enum:
+      - PENDING
+      - INVALID
+      - OVERLIMIT
+      - UNKNOWN
+      - REJECTED
+      - ACCEPTED
+      - REJECTED_BY_FPC
+      - REJECTED_BY_PARTENON
+      - CONDITIONALLY_ACCEPTED
+      - TIME_OUT
+      - LATE_RESPONSE
+      - RETURNED
+      - REVERSED
+  CreationDateTime:
+    title: Creation DateTime
+    description: Date and time at which the resource was created. ISO 8601 date-time format. All date-time fields in responses must include the timezone. An example is 2017-04-05T10:43:07+00:00
+    type: string
+    format: date-time
+  PartyIdentification125:
+    title: Party Identification (125)
+    description: Set of elements used to identify a person or an organisation.
+    additionalProperties: false
+    properties:
+      pstlAdr:
+        title: Postal Address
+        description: Information that locates and identifies a specific address, as defined by postal services.
+        additionalProperties: false
+        properties:
+          adrLine:
+            title: Address Line
+            description: Information that locates and identifies a specific address, as defined by postal services, presented in free format text. For FPS, if it is a Debtor is mapped to FPS field 117 (Originating Customer Account Address) with Originating customer’s account address N.B. Mandatory for payments originating overseas under FATF regulations and maxLength 140, array will be flatted into an uniq string with comma as separator. If Creditor is mapped to FPS field 119 (Beneficiary Customer Account Address). Beneficiary’s account address. maxLength 140, array will be flatted into an uniq string with comma+space as separator.
+            type: array
+            items:
+              type: string
+              maxLength: 70
+            example:
+              - Santander House
+              - 201 Grafton Gate
+              - Milton Keynes MK9 1AN
+              - UK
+      id:
+        $ref: '#/definitions/Party34Choice'
+  BranchAndFinancialInstitutionIdentification5:
+    title: Branch And Financial Institution Identification (5)
+    additionalProperties: false
+    required:
+      - finInstnId
+    properties:
+      finInstnId:
+        title: Financial Institution Identification
+        description: Unique and unambiguous identification of a financial institution, as assigned under an internationally recognised or proprietary identification scheme.
+        additionalProperties: false
+        properties:
+          bicfi:
+            title: BICFI
+            description: Code allocated to a financial institution by the ISO 9362 Registration Authority as described in ISO 9362 "Banking - Banking telecommunication messages - Business identifier code (BIC)". For FPS [DbtrAgt] Mapped to FPS field 042 (Originating Credit Institution) BIC of originating credit institution Optional BIC mapping used for payments originating overseas
+            type: string
+            pattern: '^[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}$'
+            example: AAAAUS29
+          clrSysMmbId:
+            title: Clearing System Member Identification
+            description: Information used to identify a member within a clearing system.
+            additionalProperties: false
+            required:
+              - mmbId
+            properties:
+              mmbId:
+                title: Member Identification
+                description: Identification of a member of a clearing system. For FPS [DbtrAgt] is Mapped to FPS field 042 (Originating Credit Institution) sort code of originating credit institution 6 digit sort code NB. This sort code is only mapped to FPS field 098 (Sending FPS Institution) if the Originating Credit Institution is the same as the FPS Sending Institution. pattern '^[0-9]{6}$' FPS [CdtrAgt] Mapped to FPS field 095 (Beneficiary Credit Institution) Sort code of credit institution holding account of beneficiary 6 digit sort code pattern '^[0-9]{6}$'
+                type: string
+                maxLength: 35
+                example: 090801
+  CashAccount24:
+    title: Cash Account (24)
+    description: Unambiguous identification of the account used in the context of the party role such as debtor account, intermediary agent account...
+    additionalProperties: false
+    required:
+      - id
+    properties:
+      id:
+        title: Identification
+        description: Unique and unambiguous identification for the account between the account owner and the account servicer. One of the properties has to be provided.
+        additionalProperties: false
+        properties:
+          iban:
+            title: IBAN
+            description: FPS If DbtrAcct mapped to FPS field 043 (Originating Customer Account No.) Originating customer’s account IBAN. If CdtrAcct mapped to FPS field 035 (Beneficiary Customer Account No.) Beneficiary customer’s account IBAN  IBAN mapping used if the FPS payment is originated overseas
+            type: string
+            maxLength: 34
+            example: GB29NWBK60161331926819
+          othr:
+            title: Other
+            additionalProperties: false
+            required:
+              - id
+            properties:
+              id:
+                title: Identification
+                description: 8 digit UK account number mapping option FPS If DbtrAcct mapped to FPS field 043 (Originating Customer Account No.)  Originating customer’s account number pattern '^[0-9]{8}$' If CdtrAcct mapped to FPS field 035 (Beneficiary Customer Account No.)  Beneficiary customer’s account number pattern '^[0-9]{8}$'
+                type: string
+                maxLength: 34
+                example: '78910102'
+      nm:
+        title: Name
+        description: Name of the account, as assigned by the account servicing institution,m in agreement with the account owner in order to provide an additional means of identification of the account. FPS [DbtrAcct] Mapped to FPS field 116 (Originating Customer Account Name) Originating customer account name N.B. Mandatory for payments originating overseas under FATF regulations maxLength 40 FPS [CdtrAcct] Mapped to FPS field 118 (Beneficiary Customer Account Name) Name of beneficiary’s account maxLength 40
+        type: string
+        maxLength: 70
+        example: Robert Ford
+  ActiveCurrencyAndAmount:
+    title: Active Currency And Amount
+    description: Number of monetary units specified in a currency, where the unit of currency is explicit and compliant with ISO 4217. The decimal separator is a dot. Note A zero amount is considered a positive amount.
+    properties:
+      ccy:
+        title: Currency Code
+        description: Code allocated to a currency, by a maintenance agency, under an international identification scheme as described in the latest edition of the international standard ISO 4217 "Codes for the representation of currencies and funds". Valid currency codes are registered with the ISO 4217 Maintenance Agency, and consist of three contiguous letters.
+        type: string
+        pattern: '^[A-Z]{3,3}$'
+        example: GBP
+      value:
+        type: number
+        pattern: '^\d{1,12}\.\d{1,2}$'
+        example: 10.01
+    required:
+      - ccy
+      - value
+    additionalProperties: false
+  PaymentIdentification3:
+    title: Payment Identification (3)
+    description: Set of elements used to provide further means of referencing a payment transaction.
+    additionalProperties: false
+    required:
+      - endToEndId
+      - txId
+    properties:
+      endToEndId:
+        title: End To End Identification
+        description: Unique identification, as assigned by the initiating party, to unambiguously identify the transaction. This identification is passed on, unchanged, throughout the entire end-to-end chain.  FPS Mapped to FPS field 062 (End to End Reference) Optional additional reference or message from sender to beneficiary maxLength 31
+        type: string
+        maxLength: 35
+        example: AY090327/456
+      txId:
+        title: Transaction Identification
+        description: Unique identification, as assigned by the first instructing agent, to unambiguously identify the transaction that is passed on, unchanged, throughout the entire interbank chain. Used by Payments Hub as idempotency key to avoid duplicated payments.
+        type: string
+        maxLength: 35
+        example: PAYMENT0123456789
+  BaseOneRate:
+    title: Exchange Rate
+    description: FP Mapped to FPS field 010 (Exchange Rate) Currency conversion rate, determined by originating institution, used to convert original amount (field 4), expressed in original currency (field 49) to amount (field 6). Only present where the currency of the original payment differs from that used by the sending FP institution  Only required for payments originated in currency other than GBP
+    type: number
+    example: 0.12
+  RemittanceInformation15:
+    title: Remittance Information (15)
+    additionalProperties: false
+    description: Information supplied to enable the matching of an entry with the items that the transfer is intended to settle, such as commercial invoices in an accounts' receivable system.
+    properties:
+      ustrd:
+        title: Unstructured
+        description: Information supplied to enable the matching/reconciliation of an entry with the items that the payment is intended to settle, such as commercial invoices in an accounts' receivable system, in an unstructured form. Payments Hub only will process the first element, ignoring the rest.FPS Mapped to FPS field 121 (Remittance Information) Additional remittance information, over and above Ref Info (Field 120)
+        type: array
+        items:
+          type: string
+          maxLength: 140
+          example: CAR INSURANCE PREMIUM
+      strd:
+        title: Structured
+        description: 'Payments Hub only will process the first element, ignoring the rest.'
+        type: array
+        items:
+          properties:
+            cdtrRefInf:
+              title: Creditor Reference Information
+              description: Reference information provided by the creditor to allow the identification of the underlying documents.
+              additionalProperties: false
+              properties:
+                ref:
+                  title: Reference
+                  description: Unique reference, as assigned by the creditor, to  unambiguously refer to the payment transaction. Usage If  available, the initiating party should provide this  reference in the structured remittance information, to  enable reconciliation by the creditor upon receipt of the amount of money. If the business context requires the use of a creditor reference or a payment remit identification, and only one identifier can be passed through the end-to-end chain, the creditor's reference or payment remittance identification should be quoted in the end-to-end transaction identification. FPS Mapped to FPS field 120 (Reference Information) Payment reference information. In most cases this will be the client reference or account number that allows the beneficiary to identify the sender or purpose of the payment     - maxLength 18
+                  type: string
+                  maxLength: 35
+                  example: X1H7UKJ9
+            addtlRmtInf:
+              title: Additional Remittance Information
+              description: Payments Hub only will process the first and second elements, ignoring the third one. FPS First item mapped to FPS field 127 (Returned Payment FPID Faster Payments reference used for returned Faster Payments. Allows recipient to match against original transaction reference. As above, only applicable for customers with outward payment capability via their Agency sort cod maxLength 4 Second item mapped to FPS field 126 (Payment Return Code Code identifying reason for returning the payment. These transactions will only occur for customers with the ability to send Faster Payments outwards from their Agency sort cod maxLength  Only required for Return Payments.
+              type: array
+              items:
+                type: string
+                maxLength: 140
+              maxLength: 3
+              example:
+                - HUB012345678909876543210
+                - '00000001'
+  RegulatoryReporting3:
+    title: Regulatory Reporting (3)
+    description: Information needed due to regulatory and statutory requirements.
+    additionalProperties: false
+    properties:
+      dtls:
+        title: Details
+        description: Information needed due to regulatory and statutory requirements. Payments Hub only will process the first element, ignoring the rest.
+        type: array
+        items:
+          additionalProperties: false
+          properties:
+            inf:
+              title: Information
+              description: Additional details that cater for specific domestic regulatory requirements. FPS Mapped to FPS field 122 (Regulatory Reporting) Not generally used for Faster Payments. May be populated by the sending member for some overseas payments maxLength 105, array will be flatted into an uniq string without separators
+              type: array
+              items:
+                type: string
+                maxLength: 35
+  FIToFIPaymentStatusReportV09:
+    title: FI To FI Payment Status Report V09
+    description: The FIToFIPaymentStatusReport message is sent by an instructed agent to the previous party in the payment chain. It is used to inform this party about the positive or negative status of an instruction (either single or file). It is also used to report on a pending instruction.
+    additionalProperties: false
+    required:
+      - grpHdr
+    properties:
+      grpHdr:
+        $ref: '#/definitions/GroupHeader53'
+      txInfAndSts:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentTransaction91'
+  GroupHeader53:
+    title: Group Header (53)
+    description: Set of characteristics shared by all individual transactions included in the status report message.
+    additionalProperties: false
+    required:
+      - creDtTm
+    properties:
+      creDtTm:
+        title: Creation DateTime
+        description: Date and time at which the message was created. Defined as ISO 8601 expressed in UTC time format (YYYY-MM-DDThh:mm:ss.sssZ).
+        type: string
+        format: datetime
+        example: '2018-01-30T20:02:10:000Z'
+  PaymentTransaction91:
+    title: Payment Transaction (91)
+    description: Provides further details on the original transactions, to which the status report message refers.
+    additionalProperties: false
+    properties:
+      orgnlEndToEndId:
+        $ref: '#/definitions/PaymentIdentification3/properties/endToEndId'
+      orgnlTxId:
+        $ref: '#/definitions/PaymentIdentification3/properties/txId'
+      txSts:
+        title: Transaction Status
+        description: 'Specifies the status of a transaction, in a coded form.'
+        type: string
+        maxLength: 4
+        example: ACCC
+      stsRsnInf:
+        type: array
+        description: Provides detailed information on the status reason.
+        items:
+          $ref: '#/definitions/StatusReasonInformation11'
+      accptncDtTm:
+        title: Acceptance DateTime
+        description: Point in time when the payment order from the initiating party meets the processing conditions of the account servicing agent. This means that the account servicing agent has received the payment order and has applied checks such as authorisation, availability of funds. Defined as ISO 8601 expressed in UTC time format (YYYY-MM-DDThh:mm:ss.sssZ). FPS Mapped to FPS field 012 (Date Sent) Business date on which the payment was sent FPS uses YYYYMMDD as date format but it will converted to YYYY-MM-DD format to avoid confusion
+        type: string
+        format: datetime
+        example: '2018-01-30T20:02:10:000Z'
+      instgAgt:
+        allOf:
+          - $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+          - title: Instructing Agent
+          - description: Agent that instructs the next party in the chain to carry out the (set of) instruction(s). FPS finInstnId.clrSysMmbId.mmbId property mapped to FPS field 098 (Sending FPS Institution) Valid sort code or BIC of sender (will contain a BIC if payment originated overseas)
+      orgnlTxRef:
+        $ref: '#/definitions/OriginalTransactionReference27'
+  PaymentTransaction106:
+    type: object
+    properties:
+      assgne:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      assgnr:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      case:
+        $ref: "#/definitions/Case5"
+      cxlId:
+        type: string
+      cxlRsnInf:
+        type: array
+        items:
+          $ref: "#/definitions/PaymentCancellationReason5"
+      orgnlClrSysRef:
+        type: string
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: "#/definitions/OriginalGroupInformation29"
+      orgnlInstrId:
+        type: string
+      orgnlIntrBkSttlmAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      orgnlIntrBkSttlmDt:
+        type: string
+        format: date
+      orgnlTxId:
+        type: string
+      orgnlTxRef:
+        $ref: "#/definitions/OriginalTransactionReference28"
+      orgnlUETR:
+        type: string
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+    title: PaymentTransaction106
+  StatusReasonInformation11:
+    title: Status Reason Information (11)
+    description: Set of elements used to provide information on the status reason of the transaction.
+    additionalProperties: false
+    properties:
+      rsn:
+        title: Reason
+        description: Specifies the reason for the status report.
+        additionalProperties: false
+        required:
+          - prtry
+        properties:
+          prtry:
+            title: Proprietary
+            description: Reason for the status, in a proprietary form. FPS Mapped to FPS field 026 (Action Code) Defines the disposition of a message 0nnn = Accepted 4nnn = Reversal Debit maxLength 4
+            type: string
+            maxLength: 35
+            example: '0000'
+      addtlInf:
+        type: array
+        description: Further details on the status reason.
+        items:
+          type: string
+          maxLength: 105
+          example: Accepted without qualification
+  OriginalTransactionReference24:
+    type: object
+    properties:
+      amt:
+        $ref: "#/definitions/AmountType4Choice"
+      cdtr:
+        $ref: "#/definitions/PartyIdentification43"
+      cdtrAcct:
+        $ref: "#/definitions/CashAccount24"
+      cdtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification5"
+      cdtrAgtAcct:
+        $ref: "#/definitions/CashAccount24"
+      cdtrSchmeId:
+        $ref: "#/definitions/PartyIdentification43"
+      dbtr:
+        $ref: "#/definitions/PartyIdentification43"
+      dbtrAcct:
+        $ref: "#/definitions/CashAccount24"
+      dbtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification5"
+      dbtrAgtAcct:
+        $ref: "#/definitions/CashAccount24"
+      intrBkSttlmAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      intrBkSttlmDt:
+        type: string
+        format: date
+      mndtRltdInf:
+        $ref: "#/definitions/MandateRelatedInformation11"
+      pmtMtd:
+        type: string
+        enum:
+        - CHK
+        - DD
+        - TRA
+        - TRF
+      pmtTpInf:
+        $ref: "#/definitions/PaymentTypeInformation25"
+      reqdColltnDt:
+        type: string
+        format: date
+      reqdExctnDt:
+        $ref: "#/definitions/DateAndDateTimeChoice"
+      rmtInf:
+        $ref: "#/definitions/RemittanceInformation11"
+      sttlmInf:
+        $ref: "#/definitions/SettlementInstruction4"
+      ultmtCdtr:
+        $ref: "#/definitions/PartyIdentification43"
+      ultmtDbtr:
+        $ref: "#/definitions/PartyIdentification43"
+    title: OriginalTransactionReference24
+  OriginalTransactionReference27:
+    title: Original Transaction Reference (27)
+    description: KeyKey elements used to refer the original transaction.
+    additionalProperties: false
+    properties:
+      intrBkSttlmAmt:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/intrBkSttlmAmt'
+      amt:
+        $ref: '#/definitions/AmountType4Choice'
+      intrBkSttlmDt:
+        title: Interbank Settlement Date
+        description: Date on which the amount of money ceases to be available to the agent that owes it and when the amount of money becomes available to the agent to which it is due. Defined as ISO 8601 (YYYY-MM-DD). FPS Mapped to FPS field 015 (Settlement Date) Identifies the date on which the payment will settle. Normally same day as sent but next business day for any payments received after 18:30 FPS uses YYYYMMDD as date format but it will converted to YYYY-MM-DD format to avoid confusion
+        type: string
+        format: date
+        example: '2018-01-30'
+      sttlmInf:
+        title: Settlement Information
+        description: Specifies the details on how the settlement of the original transaction(s) between the instructing agent and the instructed agent was completed.
+        additionalProperties: false
+        required:
+          - sttlmMtd
+        properties:
+          sttlmMtd:
+            title: Settlement Method
+            description: Method used to settle the (batch of) payment instructions. This field contains a mandatory fixed value CLRG (ClearingSystem)
+            type: string
+            enum:
+              - CLRG
+          clrSys:
+            title: Clearing System
+            description:  Specification of a pre-agreed offering between clearing agents or the channel through which the payment instruction is processed.
+            additionalProperties: false
+            required:
+              - prtry
+            properties:
+              prtry:
+                title: Proprietary
+                description: Clearing system identification in a proprietary form.FPSMapped to FPS field 029 (Settlement Cycle ID)For bank use. Indicates which of the 4 daily inter-bank settlement periods the payment was included withinmaxLength 3
+                type: string
+                maxLength: 35
+                example: '001'
+      pmtTpInf:
+        $ref: '#/definitions/PaymentTypeInformation25'
+      rmtInf:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/rmtInf'
+      dbtr:
+        allOf:
+          - $ref: '#/definitions/Party35Choice'
+          - title: Debtor
+          - description: Party that owes an amount of money to the (ultimate) creditor.
+      dbtrAcct:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/dbtrAcct'
+      dbtrAgt:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/dbtrAgt'
+      cdtrAgt:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/cdtrAgt'
+      cdtr:
+        allOf:
+          - $ref: '#/definitions/Party35Choice'
+          - title: Creditor
+          - description: Party to which an amount of money is due.
+      cdtrAcct:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/cdtrAcct'
+      ultmtCdtr:
+        allOf:
+          - $ref: '#/definitions/Party35Choice'
+          - title: Ultimate Creditor
+          - description:  Ultimate party to which an amount of money is due. FPS pty.id.orgId.othr[0].id mapped to FPS field 058 (Redirected Benefriciary Customer Account Number) pty.id.orgId.othr[0].issuer mapped to FPS field 057 (Redirected Benefriciary Credit Institution)
+      purp:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/purp'
+  OriginalTransactionReference28:
+    type: object
+    properties:
+      amt:
+        $ref: "#/definitions/AmountType4Choice"
+      cdtr:
+        $ref: "#/definitions/Party40Choice"
+      cdtrAcct:
+        $ref: "#/definitions/CashAccount38"
+      cdtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      cdtrAgtAcct:
+        $ref: "#/definitions/CashAccount38"
+      cdtrSchmeId:
+        $ref: "#/definitions/PartyIdentification135"
+      dbtr:
+        $ref: "#/definitions/Party40Choice"
+      dbtrAcct:
+        $ref: "#/definitions/CashAccount38"
+      dbtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      dbtrAgtAcct:
+        $ref: "#/definitions/CashAccount38"
+      intrBkSttlmAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      intrBkSttlmDt:
+        type: string
+        format: date
+      mndtRltdInf:
+        $ref: "#/definitions/MandateRelatedInformation14"
+      pmtMtd:
+        type: string
+        enum:
+        - CHK
+        - DD
+        - TRA
+        - TRF
+      pmtTpInf:
+        $ref: "#/definitions/PaymentTypeInformation27"
+      purp:
+        $ref: "#/definitions/Purpose2Choice"
+      reqdColltnDt:
+        type: string
+        format: date
+      reqdExctnDt:
+        $ref: "#/definitions/DateAndDateTime2Choice"
+      rmtInf:
+        $ref: "#/definitions/RemittanceInformation16"
+      sttlmInf:
+        $ref: "#/definitions/SettlementInstruction7"
+      ultmtCdtr:
+        $ref: "#/definitions/Party40Choice"
+      ultmtDbtr:
+        $ref: "#/definitions/Party40Choice"
+    title: OriginalTransactionReference28
+  AmountType4Choice:
+    title: Amount Type (4) Choice
+    additionalProperties: false
+    required:
+      - instdAmt
+    properties:
+      instdAmt:
+        $ref: '#/definitions/CreditTransferTransaction30/properties/instdAmt'
+  Party35Choice:
+    title: Party (35) Choice
+    additionalProperties: false
+    required:
+      - pty
+    properties:
+      pty:
+        $ref: '#/definitions/PartyIdentification125'
+  Party34Choice:
+    title: Party (34) Choice
+    additionalProperties: false
+    required:
+      - orgId
+    properties:
+      orgId:
+        title: OrganisationIdentification
+        description: Unique and unambiguous way to identify an organisation.
+        additionalProperties: false
+        properties:
+          othr:
+            type: array
+            items:
+              title: Other
+              description: Unique identification of an organisation, as assigned by an institution, using an identification scheme.
+              additionalProperties: false
+              required:
+                - id
+              properties:
+                id:
+                  title: Identification
+                  description: Identification assigned by an institution.
+                  type: string
+                  maxLength: 35
+                issr:
+                  title: Issuer
+                  description: Entity that assigns the identification.
+                  type: string
+                  maxLength: 35
+  AccountIdentification4Choice:
+    type: object
+    properties:
+      iban:
+        type: string
+      othr:
+        $ref: '#/definitions/GenericAccountIdentification1'
+    title: AccountIdentification4Choice
+  AccountSchemeName1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: AccountSchemeName1Choice
+  ActiveOrHistoricCurrencyAndAmount:
+    type: object
+    properties:
+      ccy:
+        type: string
+      value:
+        type: number
+    title: ActiveOrHistoricCurrencyAndAmount
+  AmendmentInformationDetails12:
+    type: object
+    properties:
+      orgnlCdtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      orgnlCdtrAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      orgnlCdtrSchmeId:
+        $ref: '#/definitions/PartyIdentification125'
+      orgnlDbtr:
+        $ref: '#/definitions/PartyIdentification125'
+      orgnlDbtrAcct:
+        $ref: '#/definitions/CashAccount24'
+      orgnlDbtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      orgnlDbtrAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      orgnlFnlColltnDt:
+        type: string
+        format: date
+      orgnlFrqcy:
+        $ref: '#/definitions/Frequency36Choice'
+      orgnlMndtId:
+        type: string
+      orgnlRsn:
+        $ref: '#/definitions/MandateSetupReason1Choice'
+      orgnlTrckgDays:
+        type: string
+    title: AmendmentInformationDetails12
+  AmendmentInformationDetails13:
+    type: object
+    properties:
+      orgnlCdtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      orgnlCdtrAgtAcct:
+        $ref: "#/definitions/CashAccount38"
+      orgnlCdtrSchmeId:
+        $ref: "#/definitions/PartyIdentification135"
+      orgnlDbtr:
+        $ref: "#/definitions/PartyIdentification135"
+      orgnlDbtrAcct:
+        $ref: "#/definitions/CashAccount38"
+      orgnlDbtrAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      orgnlDbtrAgtAcct:
+        $ref: "#/definitions/CashAccount38"
+      orgnlFnlColltnDt:
+        type: string
+        format: date
+      orgnlFrqcy:
+        $ref: "#/definitions/Frequency36Choice"
+      orgnlMndtId:
+        type: string
+      orgnlRsn:
+        $ref: "#/definitions/MandateSetupReason1Choice"
+      orgnlTrckgDays:
+        type: string
+    title: AmendmentInformationDetails13
+  Authorisation1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - AUTH
+          - FDET
+          - FSUM
+          - ILEV
+      prtry:
+        type: string
+    title: Authorisation1Choice
+  Body:
+    type: object
+    required:
+      - creationDateTime
+      - paymentId
+      - paymentsHubId
+      - status
+    properties:
+      creationDateTime:
+        type: string
+        format: date-time
+        description: Creation date and time
+      paymentId:
+        type: string
+        example: PAYMENT0123456789
+        description: Payment Id received in the Post request
+      paymentsHubId:
+        type: string
+        example: PAYMENTSHUB0123456789
+        description: Payments Hub Id
+      status:
+        type: string
+        example: PENDING
+        description: Payment status
+    title: Body
+  BranchData2:
+    type: object
+    properties:
+      id:
+        type: string
+      nm:
+        type: string
+      pstlAdr:
+        $ref: '#/definitions/PostalAddress6'
+    title: BranchData2
+  CashAccountType2Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: CashAccountType2Choice
+  CategoryPurpose1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: CategoryPurpose1Choice
+  Charges2:
+    type: object
+    properties:
+      agt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+    title: Charges2
+  Charges7:
+    type: object
+    properties:
+      agt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification6"
+      amt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+    title: Charges7
+  ClearingSystemIdentification2Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: ClearingSystemIdentification2Choice
+  ClearingSystemIdentification3Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: ClearingSystemIdentification3Choice
+  ClearingSystemMemberIdentification2:
+    type: object
+    properties:
+      clrSysId:
+        $ref: '#/definitions/ClearingSystemIdentification2Choice'
+      mmbId:
+        type: string
+    title: ClearingSystemMemberIdentification2
+  ContactDetails2:
+    type: object
+    properties:
+      emailAdr:
+        type: string
+      faxNb:
+        type: string
+      mobNb:
+        type: string
+      nm:
+        type: string
+      nmPrfx:
+        type: string
+        enum:
+          - DOCT
+          - MIST
+          - MISS
+          - MADM
+      othr:
+        type: string
+      phneNb:
+        type: string
+    title: ContactDetails2
+  CreditorReferenceInformation2:
+    type: object
+    properties:
+      ref:
+        type: string
+      tp:
+        $ref: '#/definitions/CreditorReferenceType2'
+    title: CreditorReferenceInformation2
+  CreditorReferenceType1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - RADM
+          - RPIN
+          - FXDR
+          - DISP
+          - PUOR
+          - SCOR
+      prtry:
+        type: string
+    title: CreditorReferenceType1Choice
+  CreditorReferenceType2:
+    type: object
+    properties:
+      cdOrPrtry:
+        $ref: '#/definitions/CreditorReferenceType1Choice'
+      issr:
+        type: string
+    title: CreditorReferenceType2
+  DateAndDateTimeChoice:
+    type: object
+    properties:
+      dt:
+        type: string
+        format: date
+      dtTm:
+        type: string
+        format: date-time
+    title: DateAndDateTimeChoice
+  DateAndDateTime2Choice:
+    type: object
+    properties:
+      dt:
+        type: string
+        format: date
+      dtTm:
+        type: string
+        format: date-time
+    title: DateAndDateTime2Choice
+  DateAndPlaceOfBirth1:
+    type: object
+    properties:
+      birthDt:
+        type: string
+        format: date
+      cityOfBirth:
+        type: string
+      ctryOfBirth:
+        type: string
+      prvcOfBirth:
+        type: string
+    title: DateAndPlaceOfBirth1
+  DatePeriod2:
+    type: object
+    properties:
+      frDt:
+        type: string
+        format: date
+      toDt:
+        type: string
+        format: date
+    title: DatePeriod2
+  DiscountAmountAndType1:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      tp:
+        $ref: '#/definitions/DiscountAmountType1Choice'
+    title: DiscountAmountAndType1
+  DiscountAmountType1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: DiscountAmountType1Choice
+  Document:
+    type: object
+    properties:
+      fitoFICstmrCdtTrf:
+        $ref: '#/definitions/FIToFICustomerCreditTransferV07'
+      fitoFIPmtRvsl:
+        $ref: '#/definitions/FIToFIPaymentReversalV08'
+      fitoFIPmtStsRpt:
+        $ref: '#/definitions/FIToFIPaymentStatusReportV09'
+      pmtRtr:
+        $ref: '#/definitions/PaymentReturnV08'
+    title: Document
+  Document_pacs_002_001_09:
+    type: object
+    properties:
+      fitoFIPmtStsRpt:
+        $ref: '#/definitions/FIToFIPaymentStatusReportV09'
+    title: Document
+  Document_pacs_002_001_10:
+    type: object
+    properties:
+      fitoFIPmtStsRpt:
+        $ref: '#/definitions/FIToFIPaymentStatusReportV10'
+    title: Document
+  Document_pacs_007_001_08:
+    type: object
+    properties:
+      fitoFIPmtRvsl:
+        $ref: '#/definitions/FIToFIPaymentReversalV08'
+    title: Document
+  Document_pacs_008_001_07:
+    type: object
+    properties:
+      fitoFICstmrCdtTrf:
+        $ref: '#/definitions/FIToFICustomerCreditTransferV07'
+    title: Document
+  Document_pacs_008_001_08:
+    type: object
+    properties:
+      fitoFICstmrCdtTrf:
+        $ref: '#/definitions/FIToFICustomerCreditTransferV08'
+    title: Document
+    example:
+      fitoFICstmrCdtTrf:
+        grpHdr:
+          msgId: '68043797605378930000'
+          creDtTm: '2018-12-07T16:31:49.000'
+          nbOfTxs: '1'
+          sttlmInf:
+            sttlmMtd: CLRG
+        cdtTrfTxInf:
+          - pmtId:
+              endToEndId: EndToEndId-68043797605378930000
+              txId: '68043797605378930000'
+              uetr: 3c7a7bd2-f4de-41e9-802a-5aa538984bd8
+            pmtTpInf:
+              svcLvl:
+                - prtry: FP
+              lclInstrm:
+                cd: DDT
+            intrBkSttlmAmt:
+              value: 1.1
+              ccy: GBP
+            chrgBr: SLEV
+            dbtr:
+              nm: Debitor
+            dbtrAcct:
+              id:
+                othr:
+                  id: '10092352'
+            dbtrAgt:
+              finInstnId:
+                clrSysMmbId:
+                  mmbId: 090222
+            cdtrAgt:
+              finInstnId:
+                clrSysMmbId:
+                  mmbId: '200000'
+            cdtr:
+              nm: Creditor
+            cdtrAcct:
+              id:
+                othr:
+                  id: '10056398'
+  Document_pacs_003_001_07:
+    type: object
+    properties:
+      fitoFICstmrDrctDbt:
+        $ref: '#/definitions/FIToFICustomerDirectDebitV07'
+    title: Document
+  Document_pacs_004_001_08:
+    type: object
+    properties:
+      pmtRtr:
+        $ref: '#/definitions/PaymentReturnV08'
+    title: Document
+  Document_pacs_009_001_08:
+    type: object
+    properties:
+      fitoFICstmrCdtTrf:
+        $ref: '#/definitions/FinancialInstitutionCreditTransferV08'
+    title: Document
+  Document_pacs_028_001_01:
+    type: object
+    properties:
+      fiToFIPmtStsReq:
+        $ref: '#/definitions/FIToFIPaymentStatusRequestV01'
+  DocumentAdjustment1:
+    type: object
+    properties:
+      addtlInf:
+        type: string
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      cdtDbtInd:
+        type: string
+        enum:
+          - CRDT
+          - DBIT
+      rsn:
+        type: string
+    title: DocumentAdjustment1
+  DocumentLineIdentification1:
+    type: object
+    properties:
+      nb:
+        type: string
+      rltdDt:
+        type: string
+        format: date
+      tp:
+        $ref: '#/definitions/DocumentLineType1'
+    title: DocumentLineIdentification1
+  DocumentLineInformation1:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/RemittanceAmount3'
+      desc:
+        type: string
+      id:
+        type: array
+        items:
+          $ref: '#/definitions/DocumentLineIdentification1'
+    title: DocumentLineInformation1
+  DocumentLineType1:
+    type: object
+    properties:
+      cdOrPrtry:
+        $ref: '#/definitions/DocumentLineType1Choice'
+      issr:
+        type: string
+    title: DocumentLineType1
+  DocumentLineType1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: DocumentLineType1Choice
+  EquivalentAmount2:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ccyOfTrf:
+        type: string
+    title: EquivalentAmount2
+  FIToFIPaymentReversalV08:
+    type: object
+    properties:
+      grpHdr:
+        $ref: '#/definitions/GroupHeader71'
+      orgnlGrpInf:
+        $ref: '#/definitions/OriginalGroupHeader11'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      txInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentTransaction88'
+    title: FIToFIPaymentReversalV08
+  FinancialIdentificationSchemeName1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: FinancialIdentificationSchemeName1Choice
+  FinancialInstitutionIdentification8:
+    type: object
+    properties:
+      bicfi:
+        type: string
+      clrSysMmbId:
+        $ref: '#/definitions/ClearingSystemMemberIdentification2'
+      nm:
+        type: string
+      othr:
+        $ref: '#/definitions/GenericFinancialIdentification1'
+      pstlAdr:
+        $ref: '#/definitions/PostalAddress6'
+    title: FinancialInstitutionIdentification8
+  Frequency36Choice:
+    type: object
+    properties:
+      prd:
+        $ref: '#/definitions/FrequencyPeriod1'
+      ptInTm:
+        $ref: '#/definitions/FrequencyAndMoment1'
+      tp:
+        type: string
+        enum:
+          - YEAR
+          - MNTH
+          - QURT
+          - MIAN
+          - WEEK
+          - DAIL
+          - ADHO
+          - INDA
+          - FRTN
+    title: Frequency36Choice
+  FrequencyAndMoment1:
+    type: object
+    properties:
+      ptInTm:
+        type: string
+      tp:
+        type: string
+        enum:
+          - YEAR
+          - MNTH
+          - QURT
+          - MIAN
+          - WEEK
+          - DAIL
+          - ADHO
+          - INDA
+          - FRTN
+    title: FrequencyAndMoment1
+  FrequencyPeriod1:
+    type: object
+    properties:
+      cntPerPrd:
+        type: number
+      tp:
+        type: string
+        enum:
+          - YEAR
+          - MNTH
+          - QURT
+          - MIAN
+          - WEEK
+          - DAIL
+          - ADHO
+          - INDA
+          - FRTN
+    title: FrequencyPeriod1
+  Garnishment2:
+    type: object
+    properties:
+      dt:
+        type: string
+        format: date
+      fmlyMdclInsrncInd:
+        type: boolean
+      grnshee:
+        $ref: '#/definitions/PartyIdentification125'
+      grnshmtAdmstr:
+        $ref: '#/definitions/PartyIdentification125'
+      mplyeeTermntnInd:
+        type: boolean
+      refNb:
+        type: string
+      rmtdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      tp:
+        $ref: '#/definitions/GarnishmentType1'
+    title: Garnishment2
+  GarnishmentType1:
+    type: object
+    properties:
+      cdOrPrtry:
+        $ref: '#/definitions/GarnishmentType1Choice'
+      issr:
+        type: string
+    title: GarnishmentType1
+  GarnishmentType1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: GarnishmentType1Choice
+  GenericAccountIdentification1:
+    type: object
+    properties:
+      id:
+        type: string
+      issr:
+        type: string
+      schmeNm:
+        $ref: '#/definitions/AccountSchemeName1Choice'
+    title: GenericAccountIdentification1
+  GenericFinancialIdentification1:
+    type: object
+    properties:
+      id:
+        type: string
+      issr:
+        type: string
+      schmeNm:
+        $ref: '#/definitions/FinancialIdentificationSchemeName1Choice'
+    title: GenericFinancialIdentification1
+  GenericOrganisationIdentification1:
+    type: object
+    properties:
+      id:
+        type: string
+      issr:
+        type: string
+      schmeNm:
+        $ref: '#/definitions/OrganisationIdentificationSchemeName1Choice'
+    title: GenericOrganisationIdentification1
+  GenericPersonIdentification1:
+    type: object
+    properties:
+      id:
+        type: string
+      issr:
+        type: string
+      schmeNm:
+        $ref: '#/definitions/PersonIdentificationSchemeName1Choice'
+    title: GenericPersonIdentification1
+  GroupHeader71:
+    type: object
+    properties:
+      authstn:
+        type: array
+        items:
+          $ref: '#/definitions/Authorisation1Choice'
+      btchBookg:
+        type: boolean
+      creDtTm:
+        type: string
+        format: date-time
+      ctrlSum:
+        type: number
+      grpRvsl:
+        type: boolean
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      msgId:
+        type: string
+      nbOfTxs:
+        type: string
+      sttlmInf:
+        $ref: '#/definitions/SettlementInstruction4'
+      ttlRvsdIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+    title: GroupHeader71
+  GroupHeader72:
+    type: object
+    properties:
+      authstn:
+        type: array
+        items:
+          $ref: '#/definitions/Authorisation1Choice'
+      btchBookg:
+        type: boolean
+      creDtTm:
+        type: string
+        format: date-time
+      ctrlSum:
+        type: number
+      grpRtr:
+        type: boolean
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      msgId:
+        type: string
+      nbOfTxs:
+        type: string
+      sttlmInf:
+        $ref: '#/definitions/SettlementInstruction4'
+      ttlRtrdIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+    title: GroupHeader72
+  ISOPostResponse:
+    type: object
+    required:
+      - data
+    properties:
+      data:
+        description: Response data
+        $ref: '#/definitions/Body'
+    title: ISOPostResponse
+    description: Response model for ISO post requests
+  InstructionForCreditorAgent1:
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - CHQB
+          - HOLD
+          - PHOB
+          - TELB
+      instrInf:
+        type: string
+    title: InstructionForCreditorAgent1
+  InstructionForNextAgent1:
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - PHOA
+          - TELA
+      instrInf:
+        type: string
+    title: InstructionForNextAgent1
+  LocalInstrument2Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: LocalInstrument2Choice
+  MandateRelatedInformation12:
+    type: object
+    properties:
+      amdmntInd:
+        type: boolean
+      amdmntInfDtls:
+        $ref: '#/definitions/AmendmentInformationDetails12'
+      dtOfSgntr:
+        type: string
+        format: date
+      elctrncSgntr:
+        type: string
+      fnlColltnDt:
+        type: string
+        format: date
+      frqcy:
+        $ref: '#/definitions/Frequency36Choice'
+      frstColltnDt:
+        type: string
+        format: date
+      mndtId:
+        type: string
+      rsn:
+        $ref: '#/definitions/MandateSetupReason1Choice'
+      trckgDays:
+        type: string
+    title: MandateRelatedInformation12
+  MandateRelatedInformation14:
+    type: object
+    properties:
+      amdmntInd:
+        type: boolean
+      amdmntInfDtls:
+        $ref: "#/definitions/AmendmentInformationDetails13"
+      dtOfSgntr:
+        type: string
+        format: date
+      elctrncSgntr:
+        type: string
+      fnlColltnDt:
+        type: string
+        format: date
+      frqcy:
+        $ref: "#/definitions/Frequency36Choice"
+      frstColltnDt:
+        type: string
+        format: date
+      mndtId:
+        type: string
+      rsn:
+        $ref: "#/definitions/MandateSetupReason1Choice"
+      trckgDays:
+        type: string
+    title: MandateRelatedInformation14
+  MandateSetupReason1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: MandateSetupReason1Choice
+  NameAndAddress10:
+    type: object
+    properties:
+      adr:
+        $ref: '#/definitions/PostalAddress6'
+      nm:
+        type: string
+    title: NameAndAddress10
+  NameAndAddress16:
+    type: object
+    properties:
+      adr:
+        $ref: "#/definitions/PostalAddress24"
+      nm:
+        type: string
+    title: NameAndAddress16
+  NumberOfTransactionsPerStatus5:
+    type: object
+    properties:
+      dtldCtrlSum:
+        type: number
+      dtldNbOfTxs:
+        type: string
+      dtldSts:
+        type: string
+    title: NumberOfTransactionsPerStatus5
+  OrganisationIdentification8:
+    type: object
+    properties:
+      anyBIC:
+        type: string
+      othr:
+        type: array
+        items:
+          $ref: '#/definitions/GenericOrganisationIdentification1'
+    title: OrganisationIdentification8
+  OrganisationIdentificationSchemeName1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: OrganisationIdentificationSchemeName1Choice
+  OriginalGroupHeader11:
+    type: object
+    properties:
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+      rvslRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentReversalReason8'
+    title: OriginalGroupHeader11
+  OriginalGroupHeader12:
+    type: object
+    properties:
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+      rtrRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentReturnReason4'
+    title: OriginalGroupHeader12
+  OriginalGroupHeader13:
+    type: object
+    properties:
+      grpSts:
+        type: string
+      nbOfTxsPerSts:
+        type: array
+        items:
+          $ref: '#/definitions/NumberOfTransactionsPerStatus5'
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlCtrlSum:
+        type: number
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+      orgnlNbOfTxs:
+        type: string
+      stsRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/StatusReasonInformation11'
+    title: OriginalGroupHeader13
+  OriginalGroupHeader15:
+    type: object
+    properties:
+      case:
+        $ref: "#/definitions/Case5"
+      ctrlSum:
+        type: number
+      cxlRsnInf:
+        type: array
+        items:
+          $ref: "#/definitions/PaymentCancellationReason5"
+      grpCxl:
+        type: boolean
+      grpCxlId:
+        type: string
+      nbOfTxs:
+        type: string
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+    title: OriginalGroupHeader15
+  OriginalGroupInformation27:
+    type: object
+    properties:
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlCtrlSum:
+        type: number
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+      orgnlNbOfTxs:
+        type: string
+    title: OriginalGroupInformation27
+  OriginalGroupInformation29:
+    type: object
+    properties:
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+    title: OriginalGroupInformation29
+  OriginalGroupInformation3:
+    type: object
+    properties:
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+    title: OriginalGroupInformation3
+  PaymentReturnReason4:
+    type: object
+    properties:
+      addtlInf:
+        type: array
+        items:
+          type: string
+      orgtr:
+        $ref: '#/definitions/PartyIdentification125'
+      rsn:
+        $ref: '#/definitions/ReturnReason5Choice'
+    title: PaymentReturnReason4
+  PaymentReturnV08:
+    type: object
+    properties:
+      grpHdr:
+        $ref: '#/definitions/GroupHeader72'
+      orgnlGrpInf:
+        $ref: '#/definitions/OriginalGroupHeader12'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      txInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentTransaction87'
+    title: PaymentReturnV08
+  PaymentReversalReason8:
+    type: object
+    properties:
+      addtlInf:
+        type: array
+        items:
+          type: string
+      orgtr:
+        $ref: '#/definitions/PartyIdentification125'
+      rsn:
+        $ref: '#/definitions/ReversalReason4Choice'
+    title: PaymentReversalReason8
+  PaymentTransaction73:
+    type: object
+    properties:
+      accptncDtTm:
+        type: string
+        format: date-time
+      clrSysRef:
+        type: string
+      instdAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification5"
+      instgAgt:
+        $ref: "#/definitions/BranchAndFinancialInstitutionIdentification5"
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: "#/definitions/OriginalGroupInformation3"
+      orgnlInstrId:
+        type: string
+      orgnlTxId:
+        type: string
+      orgnlTxRef:
+        $ref: "#/definitions/OriginalTransactionReference24"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+      stsReqId:
+        type: string
+    title: PaymentTransaction73
+  PaymentTransaction87:
+    type: object
+    properties:
+      chrgBr:
+        type: string
+        enum:
+          - DEBT
+          - CRED
+          - SHAR
+          - SLEV
+      chrgsInf:
+        type: array
+        items:
+          $ref: '#/definitions/Charges2'
+      clrSysRef:
+        type: string
+      compstnAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      orgnlClrSysRef:
+        type: string
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: '#/definitions/OriginalGroupInformation29'
+      orgnlInstrId:
+        type: string
+      orgnlIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      orgnlIntrBkSttlmDt:
+        type: string
+        format: date
+      orgnlTxId:
+        type: string
+      orgnlTxRef:
+        $ref: '#/definitions/OriginalTransactionReference27'
+      rtrChain:
+        $ref: '#/definitions/TransactionParties5'
+      rtrId:
+        type: string
+      rtrRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentReturnReason4'
+      rtrdInstdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      rtrdIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      sttlmPrty:
+        type: string
+        enum:
+          - URGT
+          - HIGH
+          - NORM
+      xchgRate:
+        type: number
+    title: PaymentTransaction87
+  PaymentTransaction88:
+    type: object
+    properties:
+      chrgBr:
+        type: string
+        enum:
+          - DEBT
+          - CRED
+          - SHAR
+          - SLEV
+      chrgsInf:
+        type: array
+        items:
+          $ref: '#/definitions/Charges2'
+      compstnAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      orgnlClrSysRef:
+        type: string
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: '#/definitions/OriginalGroupInformation29'
+      orgnlInstrId:
+        type: string
+      orgnlIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      orgnlTxId:
+        type: string
+      orgnlTxRef:
+        $ref: '#/definitions/OriginalTransactionReference27'
+      rvsdInstdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      rvsdIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+      rvslId:
+        type: string
+      rvslRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentReversalReason8'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      sttlmPrty:
+        type: string
+        enum:
+          - URGT
+          - HIGH
+          - NORM
+      xchgRate:
+        type: number
+    title: PaymentTransaction88
+  PaymentTypeInformation21:
+    type: object
+    properties:
+      clrChanl:
+        type: string
+        enum:
+          - RTGS
+          - RTNS
+          - MPNS
+          - BOOK
+      ctgyPurp:
+        $ref: '#/definitions/CategoryPurpose1Choice'
+      instrPrty:
+        type: string
+        enum:
+          - HIGH
+          - NORM
+      lclInstrm:
+        $ref: '#/definitions/LocalInstrument2Choice'
+      svcLvl:
+        $ref: '#/definitions/ServiceLevel8Choice'
+    title: PaymentTypeInformation21
+  PersonIdentification13:
+    type: object
+    properties:
+      dtAndPlcOfBirth:
+        $ref: '#/definitions/DateAndPlaceOfBirth1'
+      othr:
+        type: array
+        items:
+          $ref: '#/definitions/GenericPersonIdentification1'
+    title: PersonIdentification13
+  PersonIdentificationSchemeName1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: PersonIdentificationSchemeName1Choice
+  PostalAddress6:
+    type: object
+    properties:
+      adrLine:
+        type: array
+        items:
+          type: string
+      adrTp:
+        type: string
+        enum:
+          - ADDR
+          - PBOX
+          - HOME
+          - BIZZ
+          - MLTO
+          - DLVY
+      bldgNb:
+        type: string
+      ctry:
+        type: string
+      ctrySubDvsn:
+        type: string
+      dept:
+        type: string
+      pstCd:
+        type: string
+      strtNm:
+        type: string
+      subDept:
+        type: string
+      twnNm:
+        type: string
+    title: PostalAddress6
+  Purpose2Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: Purpose2Choice
+  QName:
+    type: object
+    properties:
+      localPart:
+        type: string
+      namespaceURI:
+        type: string
+      prefix:
+        type: string
+    title: QName
+  ReferredDocumentInformation7:
+    type: object
+    properties:
+      lineDtls:
+        type: array
+        items:
+          $ref: '#/definitions/DocumentLineInformation1'
+      nb:
+        type: string
+      rltdDt:
+        type: string
+        format: date
+      tp:
+        $ref: '#/definitions/ReferredDocumentType4'
+    title: ReferredDocumentInformation7
+  ReferredDocumentType3Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+        enum:
+          - MSIN
+          - CNFA
+          - DNFA
+          - CINV
+          - CREN
+          - DEBN
+          - HIRI
+          - SBIN
+          - CMCN
+          - SOAC
+          - DISP
+          - BOLD
+          - VCHR
+          - AROI
+          - TSUT
+          - PUOR
+      prtry:
+        type: string
+    title: ReferredDocumentType3Choice
+  ReferredDocumentType4:
+    type: object
+    properties:
+      cdOrPrtry:
+        $ref: '#/definitions/ReferredDocumentType3Choice'
+      issr:
+        type: string
+    title: ReferredDocumentType4
+  RegulatoryAuthority2:
+    type: object
+    properties:
+      ctry:
+        type: string
+      nm:
+        type: string
+    title: RegulatoryAuthority2
+  RemittanceAmount2:
+    type: object
+    properties:
+      adjstmntAmtAndRsn:
+        type: array
+        items:
+          $ref: '#/definitions/DocumentAdjustment1'
+      cdtNoteAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      dscntApldAmt:
+        type: array
+        items:
+          $ref: '#/definitions/DiscountAmountAndType1'
+      duePyblAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      rmtdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      taxAmt:
+        type: array
+        items:
+          $ref: '#/definitions/TaxAmountAndType1'
+    title: RemittanceAmount2
+  RemittanceAmount3:
+    type: object
+    properties:
+      adjstmntAmtAndRsn:
+        type: array
+        items:
+          $ref: '#/definitions/DocumentAdjustment1'
+      cdtNoteAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      dscntApldAmt:
+        type: array
+        items:
+          $ref: '#/definitions/DiscountAmountAndType1'
+      duePyblAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      rmtdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      taxAmt:
+        type: array
+        items:
+          $ref: '#/definitions/TaxAmountAndType1'
+    title: RemittanceAmount3
+  RemittanceLocation4:
+    type: object
+    properties:
+      rmtId:
+        type: string
+      rmtLctnDtls:
+        type: array
+        items:
+          $ref: '#/definitions/RemittanceLocationDetails1'
+    title: RemittanceLocation4
+  RemittanceLocation7:
+    type: object
+    properties:
+      rmtId:
+        type: string
+      rmtLctnDtls:
+        type: array
+        items:
+          $ref: "#/definitions/RemittanceLocationData1"
+    title: RemittanceLocation7
+  RemittanceLocationData1:
+    type: object
+    properties:
+      elctrncAdr:
+        type: string
+      mtd:
+        type: string
+        enum:
+        - EDIC
+        - EMAL
+        - FAXI
+        - POST
+        - SMSM
+        - URID
+      pstlAdr:
+        $ref: "#/definitions/NameAndAddress16"
+    title: RemittanceLocationData1
+  RemittanceLocationDetails1:
+    type: object
+    properties:
+      elctrncAdr:
+        type: string
+      mtd:
+        type: string
+        enum:
+          - FAXI
+          - EDIC
+          - URID
+          - EMAL
+          - POST
+          - SMSM
+      pstlAdr:
+        $ref: '#/definitions/NameAndAddress10'
+    title: RemittanceLocationDetails1
+  ReturnReason5Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: ReturnReason5Choice
+  ReversalReason4Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: ReversalReason4Choice
+  ServiceLevel8Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: ServiceLevel8Choice
+  SettlementDateTimeIndication1:
+    type: object
+    properties:
+      cdtDtTm:
+        type: string
+        format: date-time
+      dbtDtTm:
+        type: string
+        format: date-time
+    title: SettlementDateTimeIndication1
+  SettlementInstruction4:
+    type: object
+    properties:
+      clrSys:
+        $ref: '#/definitions/ClearingSystemIdentification3Choice'
+      instdRmbrsmntAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instdRmbrsmntAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      instgRmbrsmntAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instgRmbrsmntAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      sttlmAcct:
+        $ref: '#/definitions/CashAccount24'
+      sttlmMtd:
+        type: string
+        enum:
+          - INDA
+          - INGA
+          - COVE
+          - CLRG
+      thrdRmbrsmntAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      thrdRmbrsmntAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+    title: SettlementInstruction4
+  SettlementTimeRequest2:
+    type: object
+    properties:
+      clstm:
+        $ref: '#/definitions/XMLGregorianCalendar'
+      frTm:
+        $ref: '#/definitions/XMLGregorianCalendar'
+      rjctTm:
+        $ref: '#/definitions/XMLGregorianCalendar'
+      tillTm:
+        $ref: '#/definitions/XMLGregorianCalendar'
+    title: SettlementTimeRequest2
+  StatusReason6Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: StatusReason6Choice
+  StructuredRegulatoryReporting3:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      cd:
+        type: string
+      ctry:
+        type: string
+      dt:
+        type: string
+        format: date
+      inf:
+        type: array
+        items:
+          type: string
+      tp:
+        type: string
+    title: StructuredRegulatoryReporting3
+  StructuredRemittanceInformation15:
+    type: object
+    properties:
+      addtlRmtInf:
+        type: array
+        items:
+          type: string
+      cdtrRefInf:
+        $ref: '#/definitions/CreditorReferenceInformation2'
+      grnshmtRmt:
+        $ref: '#/definitions/Garnishment2'
+      invcee:
+        $ref: '#/definitions/PartyIdentification125'
+      invcr:
+        $ref: '#/definitions/PartyIdentification125'
+      rfrdDocAmt:
+        $ref: '#/definitions/RemittanceAmount2'
+      rfrdDocInf:
+        type: array
+        items:
+          $ref: '#/definitions/ReferredDocumentInformation7'
+      taxRmt:
+        $ref: '#/definitions/TaxInformation7'
+    title: StructuredRemittanceInformation15
+  SupplementaryData1:
+    type: object
+    properties:
+      envlp:
+        $ref: '#/definitions/SupplementaryDataEnvelope1'
+      plcAndNm:
+        type: string
+    title: SupplementaryData1
+  SupplementaryDataEnvelope1:
+    type: object
+    properties:
+      any:
+        type: object
+    title: SupplementaryDataEnvelope1
+  TaxAmount2:
+    type: object
+    properties:
+      dtls:
+        type: array
+        items:
+          $ref: '#/definitions/TaxRecordDetails2'
+      rate:
+        type: number
+      taxblBaseAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ttlAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+    title: TaxAmount2
+  TaxAmountAndType1:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      tp:
+        $ref: '#/definitions/TaxAmountType1Choice'
+    title: TaxAmountAndType1
+  TaxAmountType1Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: TaxAmountType1Choice
+  TaxAuthorisation1:
+    type: object
+    properties:
+      nm:
+        type: string
+      titl:
+        type: string
+    title: TaxAuthorisation1
+  TaxInformation6:
+    type: object
+    properties:
+      admstnZn:
+        type: string
+      cdtr:
+        $ref: '#/definitions/TaxParty1'
+      dbtr:
+        $ref: '#/definitions/TaxParty2'
+      dt:
+        type: string
+        format: date
+      mtd:
+        type: string
+      rcrd:
+        type: array
+        items:
+          $ref: '#/definitions/TaxRecord2'
+      refNb:
+        type: string
+      seqNb:
+        type: number
+      ttlTaxAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ttlTaxblBaseAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+    title: TaxInformation6
+  TaxInformation7:
+    type: object
+    properties:
+      admstnZone:
+        type: string
+      cdtr:
+        $ref: '#/definitions/TaxParty1'
+      dbtr:
+        $ref: '#/definitions/TaxParty2'
+      dt:
+        type: string
+        format: date
+      mtd:
+        type: string
+      rcrd:
+        type: array
+        items:
+          $ref: '#/definitions/TaxRecord2'
+      refNb:
+        type: string
+      seqNb:
+        type: number
+      ttlTaxAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ttlTaxblBaseAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ultmtDbtr:
+        $ref: '#/definitions/TaxParty2'
+    title: TaxInformation7
+  TaxParty1:
+    type: object
+    properties:
+      regnId:
+        type: string
+      taxId:
+        type: string
+      taxTp:
+        type: string
+    title: TaxParty1
+  TaxParty2:
+    type: object
+    properties:
+      authstn:
+        $ref: '#/definitions/TaxAuthorisation1'
+      regnId:
+        type: string
+      taxId:
+        type: string
+      taxTp:
+        type: string
+    title: TaxParty2
+  TaxPeriod2:
+    type: object
+    properties:
+      frToDt:
+        $ref: '#/definitions/DatePeriod2'
+      tp:
+        type: string
+        enum:
+          - MM_01
+          - MM_02
+          - MM_03
+          - MM_04
+          - MM_05
+          - MM_06
+          - MM_07
+          - MM_08
+          - MM_09
+          - MM_10
+          - MM_11
+          - MM_12
+          - QTR_1
+          - QTR_2
+          - QTR_3
+          - QTR_4
+          - HLF_1
+          - HLF_2
+      yr:
+        type: string
+        format: date
+    title: TaxPeriod2
+  TaxRecord2:
+    type: object
+    properties:
+      addtlInf:
+        type: string
+      certId:
+        type: string
+      ctgy:
+        type: string
+      ctgyDtls:
+        type: string
+      dbtrSts:
+        type: string
+      frmsCd:
+        type: string
+      prd:
+        $ref: '#/definitions/TaxPeriod2'
+      taxAmt:
+        $ref: '#/definitions/TaxAmount2'
+      tp:
+        type: string
+    title: TaxRecord2
+  TaxRecordDetails2:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      prd:
+        $ref: '#/definitions/TaxPeriod2'
+    title: TaxRecordDetails2
+  TransactionParties5:
+    type: object
+    properties:
+      cdtr:
+        $ref: '#/definitions/Party35Choice'
+      cdtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      dbtr:
+        $ref: '#/definitions/Party35Choice'
+      dbtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      initgPty:
+        $ref: '#/definitions/Party35Choice'
+      intrmyAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrmyAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrmyAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      prvsInstgAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      prvsInstgAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      prvsInstgAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      ultmtCdtr:
+        $ref: '#/definitions/Party35Choice'
+      ultmtDbtr:
+        $ref: '#/definitions/Party35Choice'
+    title: TransactionParties5
+  XMLGregorianCalendar:
+    type: object
+    properties:
+      day:
+        type: integer
+        format: int32
+      eon:
+        type: integer
+      eonAndYear:
+        type: integer
+      fractionalSecond:
+        type: number
+      hour:
+        type: integer
+        format: int32
+      millisecond:
+        type: integer
+        format: int32
+      minute:
+        type: integer
+        format: int32
+      month:
+        type: integer
+        format: int32
+      second:
+        type: integer
+        format: int32
+      timezone:
+        type: integer
+        format: int32
+      valid:
+        type: boolean
+      xmlschemaType:
+        $ref: '#/definitions/QName'
+      year:
+        type: integer
+        format: int32
+    title: XMLGregorianCalendar
+  CancellationReason33Choice:
+    type: object
+    properties:
+      cd:
+        type: string
+      prtry:
+        type: string
+    title: CancellationReason33Choice
+  Case4:
+    type: object
+    properties:
+      cretr:
+        $ref: '#/definitions/Party35Choice'
+      id:
+        type: string
+      reopCaseIndctn:
+        type: boolean
+    title: Case4
+  Case5:
+    type: object
+    properties:
+      cretr:
+        $ref: "#/definitions/Party40Choice"
+      id:
+        type: string
+      reopCaseIndctn:
+        type: boolean
+    title: Case5
+  CaseAssignment4:
+    type: object
+    properties:
+      assgne:
+        $ref: '#/definitions/Party35Choice'
+      assgnr:
+        $ref: '#/definitions/Party35Choice'
+      creDtTm:
+        type: string
+        format: date-time
+      id:
+        type: string
+    title: CaseAssignment4
+  CaseAssignment5:
+    type: object
+    properties:
+      assgne:
+        $ref: "#/definitions/Party40Choice"
+      assgnr:
+        $ref: "#/definitions/Party40Choice"
+      creDtTm:
+        type: string
+        format: date-time
+      id:
+        type: string
+    title: CaseAssignment5
+  ControlData1:
+    type: object
+    properties:
+      ctrlSum:
+        type: number
+      nbOfTxs:
+        type: string
+    title: ControlData1
+  Document_camt_027_001_06:
+    type: object
+    properties:
+      clmNonRct:
+        $ref: "#/definitions/ClaimNonReceiptV06"
+    title: Document
+  Document_camt_056_001_07:
+    type: object
+    properties:
+      fitoFIPmtCxlReq:
+        $ref: '#/definitions/FIToFIPaymentCancellationRequestV07'
+    title: Document
+  Document_camt_056_001_08:
+    type: object
+    properties:
+      fitoFIPmtCxlReq:
+        $ref: "#/definitions/FIToFIPaymentCancellationRequestV08"
+    title: Document
+  Document_camt_087_001_05:
+    type: object
+    properties:
+      reqToModifyPmt:
+        $ref: "#/definitions/RequestToModifyPaymentV05"
+    title: Document
+  ClaimNonReceiptV06:
+    type: object
+    properties:
+      assgnmt:
+        $ref: "#/definitions/CaseAssignment4"
+      case:
+        $ref: "#/definitions/Case4"
+      coverDtls:
+        $ref: "#/definitions/MissingCover3"
+      instrForAssgne:
+        $ref: "#/definitions/InstructionForAssignee1"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+      undrlyg:
+        $ref: "#/definitions/UnderlyingTransaction4Choice"
+    title: ClaimNonReceiptV06
+  FIToFIPaymentCancellationRequestV07:
+    type: object
+    properties:
+      assgnmt:
+        $ref: '#/definitions/CaseAssignment4'
+      case:
+        $ref: '#/definitions/Case4'
+      ctrlData:
+        $ref: '#/definitions/ControlData1'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      undrlyg:
+        type: array
+        items:
+          $ref: '#/definitions/UnderlyingTransaction20'
+    title: FIToFIPaymentCancellationRequestV07
+  FIToFIPaymentCancellationRequestV08:
+    type: object
+    properties:
+      assgnmt:
+        $ref: "#/definitions/CaseAssignment5"
+      case:
+        $ref: "#/definitions/Case5"
+      ctrlData:
+        $ref: "#/definitions/ControlData1"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+      undrlyg:
+        type: array
+        items:
+          $ref: "#/definitions/UnderlyingTransaction23"
+    title: FIToFIPaymentCancellationRequestV08
+  OriginalGroupHeader10:
+    type: object
+    properties:
+      case:
+        $ref: '#/definitions/Case4'
+      ctrlSum:
+        type: number
+      cxlRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentCancellationReason4'
+      grpCxl:
+        type: boolean
+      grpCxlId:
+        type: string
+      nbOfTxs:
+        type: string
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+    title: OriginalGroupHeader10
+  PaymentCancellationReason4:
+    type: object
+    properties:
+      addtlInf:
+        type: array
+        items:
+          type: string
+      orgtr:
+        $ref: '#/definitions/PartyIdentification125'
+      rsn:
+        $ref: '#/definitions/CancellationReason33Choice'
+    title: PaymentCancellationReason4
+  PaymentCancellationReason5:
+    type: object
+    properties:
+      addtlInf:
+        type: array
+        items:
+          type: string
+      orgtr:
+        $ref: "#/definitions/PartyIdentification135"
+      rsn:
+        $ref: "#/definitions/CancellationReason33Choice"
+    title: PaymentCancellationReason5
+  PaymentTransaction89:
+    type: object
+    properties:
+      assgne:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      assgnr:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      case:
+        $ref: '#/definitions/Case4'
+      cxlId:
+        type: string
+      cxlRsnInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentCancellationReason4'
+      orgnlClrSysRef:
+        type: string
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: '#/definitions/OriginalGroupInformation29'
+      orgnlInstrId:
+        type: string
+      orgnlIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      orgnlIntrBkSttlmDt:
+        type: string
+        format: date
+      orgnlTxId:
+        type: string
+      orgnlTxRef:
+        $ref: '#/definitions/OriginalTransactionReference27'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+    title: PaymentTransaction89
+  UnderlyingTransaction20:
+    type: object
+    properties:
+      orgnlGrpInfAndCxl:
+        $ref: '#/definitions/OriginalGroupHeader10'
+      txInf:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentTransaction89'
+    title: UnderlyingTransaction20
+  UnderlyingTransaction23:
+    type: object
+    properties:
+      orgnlGrpInfAndCxl:
+        $ref: "#/definitions/OriginalGroupHeader15"
+      txInf:
+        type: array
+        items:
+          $ref: "#/definitions/PaymentTransaction106"
+    title: UnderlyingTransaction23
+  AmendmentInformationDetails11:
+    type: object
+    properties:
+      orgnlCdtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      orgnlCdtrAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      orgnlCdtrSchmeId:
+        $ref: '#/definitions/PartyIdentification43'
+      orgnlDbtr:
+        $ref: '#/definitions/PartyIdentification43'
+      orgnlDbtrAcct:
+        $ref: '#/definitions/CashAccount24'
+      orgnlDbtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      orgnlDbtrAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      orgnlFnlColltnDt:
+        type: string
+        format: date
+      orgnlFrqcy:
+        $ref: '#/definitions/Frequency36Choice'
+      orgnlMndtId:
+        type: string
+      orgnlRsn:
+        $ref: '#/definitions/MandateSetupReason1Choice'
+      orgnlTrckgDays:
+        type: string
+    title: AmendmentInformationDetails11
+  DateAndPlaceOfBirth:
+    type: object
+    properties:
+      birthDt:
+        type: string
+        format: date
+      cityOfBirth:
+        type: string
+      ctryOfBirth:
+        type: string
+      prvcOfBirth:
+        type: string
+    title: DateAndPlaceOfBirth
+  DatePeriodDetails:
+    type: object
+    properties:
+      frDt:
+        type: string
+        format: date
+      toDt:
+        type: string
+        format: date
+    title: DatePeriodDetails
+  DirectDebitTransaction9:
+    type: object
+    properties:
+      cdtrSchmeId:
+        $ref: '#/definitions/PartyIdentification43'
+      mndtRltdInf:
+        $ref: '#/definitions/MandateRelatedInformation11'
+      preNtfctnDt:
+        type: string
+        format: date
+      preNtfctnId:
+        type: string
+    title: DirectDebitTransaction9
+  DirectDebitTransactionInformation21:
+    type: object
+    properties:
+      cdtr:
+        $ref: '#/definitions/PartyIdentification43'
+      cdtrAcct:
+        $ref: '#/definitions/CashAccount24'
+      cdtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      cdtrAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      chrgBr:
+        type: string
+        enum:
+          - DEBT
+          - CRED
+          - SHAR
+          - SLEV
+      chrgsInf:
+        type: array
+        items:
+          $ref: '#/definitions/Charges2'
+      dbtr:
+        $ref: '#/definitions/PartyIdentification43'
+      dbtrAcct:
+        $ref: '#/definitions/CashAccount24'
+      dbtrAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      dbtrAgtAcct:
+        $ref: '#/definitions/CashAccount24'
+      drctDbtTx:
+        $ref: '#/definitions/DirectDebitTransaction9'
+      initgPty:
+        $ref: '#/definitions/PartyIdentification43'
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      intrmyAgt1:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrmyAgt1Acct:
+        $ref: '#/definitions/CashAccount24'
+      intrmyAgt2:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrmyAgt2Acct:
+        $ref: '#/definitions/CashAccount24'
+      intrmyAgt3:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrmyAgt3Acct:
+        $ref: '#/definitions/CashAccount24'
+      pmtId:
+        $ref: '#/definitions/PaymentIdentification3'
+      pmtTpInf:
+        $ref: '#/definitions/PaymentTypeInformation25'
+      purp:
+        $ref: '#/definitions/Purpose2Choice'
+      reqdColltnDt:
+        type: string
+        format: date
+      rgltryRptg:
+        type: array
+        items:
+          $ref: '#/definitions/RegulatoryReporting3'
+      rltdRmtInf:
+        type: array
+        items:
+          $ref: '#/definitions/RemittanceLocation4'
+      rmtInf:
+        $ref: '#/definitions/RemittanceInformation11'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+      sttlmPrty:
+        type: string
+        enum:
+          - URGT
+          - HIGH
+          - NORM
+      ultmtCdtr:
+        $ref: '#/definitions/PartyIdentification43'
+      ultmtDbtr:
+        $ref: '#/definitions/PartyIdentification43'
+      xchgRate:
+        type: number
+    title: DirectDebitTransactionInformation21
+  FIToFICustomerDirectDebitV07:
+    type: object
+    properties:
+      drctDbtTxInf:
+        type: array
+        items:
+          $ref: '#/definitions/DirectDebitTransactionInformation21'
+      grpHdr:
+        $ref: '#/definitions/GroupHeader50'
+      splmtryData:
+        type: array
+        items:
+          $ref: '#/definitions/SupplementaryData1'
+    title: FIToFICustomerDirectDebitV07
+  Garnishment1:
+    type: object
+    properties:
+      dt:
+        type: string
+        format: date
+      fmlyMdclInsrncInd:
+        type: boolean
+      grnshee:
+        $ref: '#/definitions/PartyIdentification43'
+      grnshmtAdmstr:
+        $ref: '#/definitions/PartyIdentification43'
+      mplyeeTermntnInd:
+        type: boolean
+      refNb:
+        type: string
+      rmtdAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      tp:
+        $ref: '#/definitions/GarnishmentType1'
+    title: Garnishment1
+  GroupHeader50:
+    type: object
+    properties:
+      authstn:
+        type: array
+        items:
+          $ref: '#/definitions/Authorisation1Choice'
+      btchBookg:
+        type: boolean
+      creDtTm:
+        type: string
+        format: date-time
+      ctrlSum:
+        type: number
+      instdAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      instgAgt:
+        $ref: '#/definitions/BranchAndFinancialInstitutionIdentification5'
+      intrBkSttlmDt:
+        type: string
+        format: date
+      msgId:
+        type: string
+      nbOfTxs:
+        type: string
+      pmtTpInf:
+        $ref: '#/definitions/PaymentTypeInformation25'
+      sttlmInf:
+        $ref: '#/definitions/SettlementInstruction2'
+      ttlIntrBkSttlmAmt:
+        $ref: '#/definitions/ActiveCurrencyAndAmount'
+    title: GroupHeader50
+  MandateRelatedInformation11:
+    type: object
+    properties:
+      amdmntInd:
+        type: boolean
+      amdmntInfDtls:
+        $ref: '#/definitions/AmendmentInformationDetails11'
+      dtOfSgntr:
+        type: string
+        format: date
+      elctrncSgntr:
+        type: string
+      fnlColltnDt:
+        type: string
+        format: date
+      frqcy:
+        $ref: '#/definitions/Frequency36Choice'
+      frstColltnDt:
+        type: string
+        format: date
+      mndtId:
+        type: string
+      rsn:
+        $ref: '#/definitions/MandateSetupReason1Choice'
+      trckgDays:
+        type: string
+    title: MandateRelatedInformation11
+  Party11Choice:
+    type: object
+    properties:
+      orgId:
+        $ref: '#/definitions/OrganisationIdentification8'
+      prvtId:
+        $ref: '#/definitions/PersonIdentification5'
+    title: Party11Choice
+  PartyIdentification43:
+    type: object
+    properties:
+      ctctDtls:
+        $ref: '#/definitions/ContactDetails2'
+      ctryOfRes:
+        type: string
+      id:
+        $ref: '#/definitions/Party11Choice'
+      nm:
+        type: string
+      pstlAdr:
+        $ref: '#/definitions/PostalAddress6'
+    title: PartyIdentification43
+  PersonIdentification5:
+    type: object
+    properties:
+      dtAndPlcOfBirth:
+        $ref: '#/definitions/DateAndPlaceOfBirth'
+      othr:
+        type: array
+        items:
+          $ref: '#/definitions/GenericPersonIdentification1'
+    title: PersonIdentification5
+  RemittanceInformation11:
+    type: object
+    properties:
+      strd:
+        type: array
+        items:
+          $ref: '#/definitions/StructuredRemittanceInformation13'
+      ustrd:
+        type: array
+        items:
+          type: string
+    title: RemittanceInformation11
+  SettlementInstruction2:
+    type: object
+    properties:
+      clrSys:
+        $ref: '#/definitions/ClearingSystemIdentification3Choice'
+      sttlmAcct:
+        $ref: '#/definitions/CashAccount24'
+      sttlmMtd:
+        type: string
+        enum:
+          - INDA
+          - INGA
+          - CLRG
+    title: SettlementInstruction2
+  StructuredRemittanceInformation13:
+    type: object
+    properties:
+      addtlRmtInf:
+        type: array
+        items:
+          type: string
+      cdtrRefInf:
+        $ref: '#/definitions/CreditorReferenceInformation2'
+      grnshmtRmt:
+        $ref: '#/definitions/Garnishment1'
+      invcee:
+        $ref: '#/definitions/PartyIdentification43'
+      invcr:
+        $ref: '#/definitions/PartyIdentification43'
+      rfrdDocAmt:
+        $ref: '#/definitions/RemittanceAmount2'
+      rfrdDocInf:
+        type: array
+        items:
+          $ref: '#/definitions/ReferredDocumentInformation7'
+      taxRmt:
+        $ref: '#/definitions/TaxInformation4'
+    title: StructuredRemittanceInformation13
+  TaxAmount1:
+    type: object
+    properties:
+      dtls:
+        type: array
+        items:
+          $ref: '#/definitions/TaxRecordDetails1'
+      rate:
+        type: number
+      taxblBaseAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ttlAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+    title: TaxAmount1
+  TaxInformation4:
+    type: object
+    properties:
+      admstnZone:
+        type: string
+      cdtr:
+        $ref: '#/definitions/TaxParty1'
+      dbtr:
+        $ref: '#/definitions/TaxParty2'
+      dt:
+        type: string
+        format: date
+      mtd:
+        type: string
+      rcrd:
+        type: array
+        items:
+          $ref: '#/definitions/TaxRecord1'
+      refNb:
+        type: string
+      seqNb:
+        type: number
+      ttlTaxAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ttlTaxblBaseAmt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      ultmtDbtr:
+        $ref: '#/definitions/TaxParty2'
+    title: TaxInformation4
+  TaxPeriod1:
+    type: object
+    properties:
+      frToDt:
+        $ref: '#/definitions/DatePeriodDetails'
+      tp:
+        type: string
+        enum:
+          - MM_01
+          - MM_02
+          - MM_03
+          - MM_04
+          - MM_05
+          - MM_06
+          - MM_07
+          - MM_08
+          - MM_09
+          - MM_10
+          - MM_11
+          - MM_12
+          - QTR_1
+          - QTR_2
+          - QTR_3
+          - QTR_4
+          - HLF_1
+          - HLF_2
+      yr:
+        type: string
+        format: date
+    title: TaxPeriod1
+  TaxRecord1:
+    type: object
+    properties:
+      addtlInf:
+        type: string
+      certId:
+        type: string
+      ctgy:
+        type: string
+      ctgyDtls:
+        type: string
+      dbtrSts:
+        type: string
+      frmsCd:
+        type: string
+      prd:
+        $ref: '#/definitions/TaxPeriod1'
+      taxAmt:
+        $ref: '#/definitions/TaxAmount1'
+      tp:
+        type: string
+    title: TaxRecord1
+  TaxRecordDetails1:
+    type: object
+    properties:
+      amt:
+        $ref: '#/definitions/ActiveOrHistoricCurrencyAndAmount'
+      prd:
+        $ref: '#/definitions/TaxPeriod1'
+    title: TaxRecordDetails1
+  FIToFIPaymentStatusReportV10:
+    title: FI To FI Payment Status Report V10
+    description: The FIToFIPaymentStatusReport message is sent by an instructed agent to the previous party in the payment chain. It is used to inform this party about the positive or negative status of an instruction (either single or file). It is also used to report on a pending instruction.
+    additionalProperties: false
+    required:
+      - grpHdr
+    properties:
+      grpHdr:
+        $ref: '#/definitions/GroupHeader53'
+      txInfAndSts:
+        type: array
+        items:
+          $ref: '#/definitions/PaymentTransaction91'
+  RequestToModifyPaymentV05:
+    type: object
+    properties:
+      assgnmt:
+        $ref: "#/definitions/CaseAssignment4"
+      case:
+        $ref: "#/definitions/Case4"
+      instrForAssgne:
+        $ref: "#/definitions/InstructionForAssignee1"
+      mod:
+        $ref: "#/definitions/RequestedModification7"
+      splmtryData:
+        type: array
+        items:
+          $ref: "#/definitions/SupplementaryData1"
+      undrlyg:
+        $ref: "#/definitions/UnderlyingTransaction4Choice"
+    title: RequestToModifyPaymentV05
+  InstructionForAssignee1:
+    type: object
+    properties:
+      cd:
+        type: string
+      instrInf:
+        type: string
+    title: InstructionForAssignee1
+  RequestedModification7:
+    type: object
+    properties:
+      amt:
+        $ref: "#/definitions/AmountType4Choice"
+      cdtr:
+        $ref: "#/definitions/PartyIdentification125"
+      cdtrAcct:
+        $ref: "#/definitions/CashAccount24"
+      cdtrAgtAcct:
+        $ref: "#/definitions/CashAccount24"
+      chrgBr:
+        type: string
+        enum:
+        - CRED
+        - DEBT
+        - SHAR
+        - SLEV
+      dbtr:
+        $ref: "#/definitions/PartyIdentification125"
+      dbtrAcct:
+        $ref: "#/definitions/CashAccount24"
+      dbtrAgtAcct:
+        $ref: "#/definitions/CashAccount24"
+      endToEndId:
+        type: string
+      instrForCdtrAgt:
+        type: array
+        items:
+          $ref: "#/definitions/InstructionForCreditorAgent1"
+      instrForDbtrAgt:
+        type: string
+      instrForNxtAgt:
+        type: array
+        items:
+          $ref: "#/definitions/InstructionForNextAgent1"
+      instrId:
+        type: string
+      intrBkSttlmAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      intrBkSttlmDt:
+        type: string
+        format: date
+      pmtTpInf:
+        $ref: "#/definitions/PaymentTypeInformation25"
+      purp:
+        $ref: "#/definitions/Purpose2Choice"
+      reqdColltnDt:
+        type: string
+        format: date
+      reqdExctnDt:
+        $ref: "#/definitions/DateAndDateTime2Choice"
+      rmtInf:
+        $ref: "#/definitions/RemittanceInformation15"
+      sttlmInf:
+        $ref: "#/definitions/SettlementInstruction3"
+      txId:
+        type: string
+      ultmtCdtr:
+        $ref: "#/definitions/PartyIdentification125"
+      ultmtDbtr:
+        $ref: "#/definitions/PartyIdentification125"
+    title: RequestedModification7
+  UnderlyingTransaction4Choice:
+    type: object
+    properties:
+      initn:
+        $ref: "#/definitions/UnderlyingPaymentInstruction4"
+      intrBk:
+        $ref: "#/definitions/UnderlyingPaymentTransaction3"
+      stmtNtry:
+        $ref: "#/definitions/UnderlyingStatementEntry2"
+    title: UnderlyingTransaction4Choice
+  UnderlyingPaymentInstruction4:
+    type: object
+    properties:
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: "#/definitions/UnderlyingGroupInformation1"
+      orgnlInstdAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      orgnlInstrId:
+        type: string
+      orgnlPmtInfId:
+        type: string
+      orgnlTxRef:
+        $ref: "#/definitions/OriginalTransactionReference27"
+      reqdColltnDt:
+        type: string
+        format: date
+      reqdExctnDt:
+        $ref: "#/definitions/DateAndDateTime2Choice"
+    title: UnderlyingPaymentInstruction4
+  UnderlyingPaymentTransaction3:
+    type: object
+    properties:
+      orgnlEndToEndId:
+        type: string
+      orgnlGrpInf:
+        $ref: "#/definitions/UnderlyingGroupInformation1"
+      orgnlInstrId:
+        type: string
+      orgnlIntrBkSttlmAmt:
+        $ref: "#/definitions/ActiveOrHistoricCurrencyAndAmount"
+      orgnlIntrBkSttlmDt:
+        type: string
+        format: date
+      orgnlTxId:
+        type: string
+      orgnlTxRef:
+        $ref: "#/definitions/OriginalTransactionReference27"
+    title: UnderlyingPaymentTransaction3
+  UnderlyingStatementEntry2:
+    type: object
+    properties:
+      orgnlGrpInf:
+        $ref: "#/definitions/OriginalGroupInformation29"
+      orgnlNtryId:
+        type: string
+      orgnlStmtId:
+        type: string
+    title: UnderlyingStatementEntry2
+  UnderlyingGroupInformation1:
+    type: object
+    properties:
+      orgnlCreDtTm:
+        type: string
+        format: date-time
+      orgnlMsgDlvryChanl:
+        type: string
+      orgnlMsgId:
+        type: string
+      orgnlMsgNmId:
+        type: string
+    title: UnderlyingGroupInformation1
+  MissingCover3:
+    type: object
+    properties:
+      coverCrrctn:
+        $ref: "#/definitions/SettlementInstruction3"
+      mssngCoverInd:
+        type: boolean
+    title: MissingCover3
+  ISOSimulationResponse:
+    type: object
+    required:
+      - data
+    properties:
+      data:
+        $ref: '#/definitions/SimulationBody'
+    title: ISOSimulationResponse
+    description: Response model for ISO simulation requests
+  SimulationBody:
+    properties:
+      debitAmount:
+        description: "Data structure containing debit amount details.\n\nThis amount is transferred from the main customer's account."
+        allOf:
+          - $ref: '#/definitions/amount'
+      debtorChargeFee:
+        description: "Data structure containing details of the debtor charge fee associated with the payment that is paid by the debtor"
+        allOf:
+          - $ref: '#/definitions/amount'
+      creditorChargeFee:
+        description: "Data structure containing details of the creditor charge fee associated with the payment that is paid by the beneficiary"
+        allOf:
+          - $ref: '#/definitions/amount'
+      paymentSystemName:
+        type: string
+        description: "Name of the payment system, for example, EURO1, FP, SWIFT, or TARGET2"
+        example: SWIFT
+      valueDate:
+        type: string
+        format: date
+        description: "Value date from when account interest is calculated and, for international payments, the FX accounting transaction must be posted.\n\nThe value uses the complete data format defined in ISO 8601:\n\n'YYYY-MM-DD'\n\nWhere:\n- YYYY: 4-digit year\n- MM: 2-digit month (for example, 01 = January)\n- DD: 2-digit day of the month (01 through 31)"
+        example: '2020-02-03'
+      beneficiaryAgentRouted:
+        description: "Data structure containing details of the routed beneficiary agent.\n\nThe routed beneficiary agent receives the funds from the payment and is calculated or validated by the local payments engine."
+        allOf:
+          - $ref: '#/definitions/agent'
+      payerAgentRouted:
+        description: "Data structure containing details of the routed payer agent.\n\nThe payment transfers funds from the routed payer agent, who is calculated or validated by the local payments engine."
+        allOf:
+          - $ref: '#/definitions/agent'
+      intermediateDestinationAgentRouted:
+        description: "Data structure containing details of the routed intermediate destination agent calculated or validated by the local payments engine.\n\nFunds are sent through the routed intermediate destination agent to the creditor agent.\n\nIn a request, you must provide either the 'intermediateAccount' data structure or the 'agent', 'agentName', and 'addressAgent' parameters."
+        allOf:
+          - $ref: '#/definitions/intermediate'
+      intermediateSourceAgentRouted:
+        description: "Data structure containing details of the routed intermediate source agent calculated or validated by the local payments engine.\n\nFunds are sent through the routed intermediate source agent to the creditor agent.\n\nIn a request, you must provide either the 'intermediateAccount' data structure or the 'agent', 'agentName', and 'addressAgent' parameters."
+        allOf:
+          - $ref: '#/definitions/intermediate'
+      intermediateAgentRouted:
+        description: "Data structure containing details of the routed intermediate agent calculated or validated by the local payments engine.\n\nFunds are sent through the routed intermediate agent to the creditor agent.\n\nIn a request, you must provide either the 'intermediateAccount' data structure or the 'agent', 'agentName', and 'addressAgent' parameters."
+        allOf:
+          - $ref: '#/definitions/intermediate'
+    additionalProperties: false
+    description: "Response to a request to create a simulated payment order"
+    required:
+      - debitAmount
+      - debtorChargeFee
+      - creditorChargeFee
+      - valueDate
+      - requestOriginalData
+  amount:
+    properties:
+      currency:
+        type: string
+        description: "Currency code.\n\nThe value is in the alpha-3 format defined in ISO 4217 (https://www.iso.org/iso-4217-currency-codes.html)."
+        example: EUR
+      amount:
+        type: number
+        format: double
+        description: "Amount.\n\nThe value uses the data format defined in ISO 20022 and has a maximum of 18 digits, of which 5 can be decimals, separated by a point."
+        example: 4962.51
+  intermediate:
+    properties:
+      intermediateAccount:
+        description: "Data structure containing account details for the intermediate destination agent, intermediate source agent, or intermediate agent, or their routed equivalents.\n\nThe value of 'accountIdType' must not be 'TXT' for this account type."
+        allOf:
+          - $ref: '#/definitions/account'
+      agent:
+        type: string
+        description: "Financial agent in BIC format"
+        example: BMSXMXMMXXX
+      agentName:
+        type: string
+        description: "Agent's name.\n\nThe value is a maximum of 70 char long."
+        example: "Santander Consumer Bank Polonia"
+      addressAgent:
+        type: string
+        description: "Agent's address.\n\nThe value is a maximum of 242 char long."
+        example: 'PROL. PASEO DE LA REFORMA 500, COL. LOMAS DE SANTA FE, EDIFICIO CORPORATIVO SANTA FE, Mexico, Mexico'
+    additionalProperties: false
+    description: "Data structure containing agent details"
+  agent:
+    properties:
+      agent:
+        type: string
+        description: "Financial agent in BIC format"
+        example: SCFBPLPWXXX
+      agentName:
+        type: string
+        description: "Agent's name.\n\nThe value is a maximum of 70 char long."
+        example: Santander Consumer Bank Polonia
+      addressAgent:
+        type: string
+        description: "Agent's address.\n\nThe value is a maximum of 242 char long."
+        example: 'Strzegomska 42c 53-611 Wroclaw, Poland'
+    additionalProperties: false
+    description: "Data structure containing agent details"
+  account:
+    properties:
+      accountIdType:
+        type: string
+        description: "Format used for the account number in the 'accountId' element.\n\nThe possible values are:\n- TXT = Free format credit account\n- IBAN = IBAN code\n- BBAN = Basic Bank Account Number (BBAN) that represents a country-specific bank account number. Each country has its own standards for the format and length of the BBAN. The value is at most 31 char or 35 bytes long.\n\nFor example:\n- In the UK, the BBAN format is: Sort code(6) + Account(8)\n- In Spain, it is: Banco(4) + Sucursal(4) + CD(2) + CTA(10)"
+        example: BBAN
+      accountId:
+        type: string
+        description: "Account number, in the format defined in the 'accountIdType' element"
+        example: PL8800491029222895847077
+    additionalProperties: false
+    description: "Data structure containing account details"
+tags:
+  - name: Payments
+    description: Payments endpoints
+  - name: Simulations
+    description: Simulation endpoints
