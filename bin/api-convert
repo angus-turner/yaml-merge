@@ -3,38 +3,45 @@
 'use strict';
 const resolve = require('path').resolve;
 const fs = require('fs');
-const logger = require('winston')
 const apiSpecConverter = require('api-spec-converter');
 const index = require('../index.js');
 const {readAsJSON} = require("../index");
+const jsYaml = require('js-yaml');
+const {logger} = require("../index");
 
 const files = process.argv
     .slice(2)
     .map((path) => resolve(path));
 
-
 // convert from endpoint
-const converted = apiSpecConverter.convert({
+apiSpecConverter.convert({
     from: 'openapi_3',
     to: 'swagger_2',
     // source: 'http://localhost:8080/v3/api-docs',
     source: files[0]
 
 }).then(function (convertedJson) {
-    return index.cleanupOpenAPI(convertedJson)
-});
 
-merge(converted, files)
+    const mergedFile = index.yamlMerge(index.readAsJSON(files[1]), index.cleanupOpenAPI(convertedJson))
 
-function merge(converted, files) {
+    apiSpecConverter.convert({
+        from: 'swagger_2',
+        to: 'swagger_2',
+        source: jsYaml.load(mergedFile)
+    }).then(function (sortedFile) {
+        let options = {syntax: 'yaml', order: 'openapi'}
 
-    const outputFile = index.yamlMerge(converted, index.readAsJSON(files[1]))
+        fs.writeFile('result.yaml', sortedFile.stringify(options), function (err) {
+            if (err) return index.logger.error(err);
+            index.logger.info('OutputFile' + sortedFile);
+        })
+    })
 
-    fs.writeFile('result.yaml', outputFile, function (err) {
-        if (err) return console.log(err);
-        console.log(`OutputFile ${outputFile}`);
-    });
-}
+})
+
+
+
+
 
 
 

@@ -28,9 +28,25 @@ function readAsJSON(fileName) {
 }
 
 function cleanupOpenAPI(swaggerVersion2) {
-    //TODO: strip out xml references
-    return swaggerVersion2.spec.definitions;
+    return deepOmit({"definitions": swaggerVersion2.spec.definitions}, 'xml');
+    // return {"definitions": swaggerVersion2.spec.definitions};
 }
+
+function deepOmit(obj, keysToOmit) {
+    let keysToOmitIndex = _.keyBy(Array.isArray(keysToOmit) ? keysToOmit : [keysToOmit]); // create an index object of the keys that should be omitted
+
+    function omitFromObject(obj) { // the inner function which will be called recursivley
+        return _.transform(obj, function (result, value, key) { // transform to a new object
+            if (key in keysToOmitIndex) { // if the key is in the index skip it
+                return;
+            }
+
+            result[key] = _.isObject(value) ? omitFromObject(value) : value; // if the key is an object run it through the inner function - omitFromObject
+        })
+    }
+    return omitFromObject(obj); // return the inner function result
+}
+
 
 function yamlMerge(doc1, doc2) {
     const outputJSON = _.mergeWith(doc1, doc2, (objValue, srcValue) => {
@@ -61,4 +77,5 @@ function yamlMergeFromPath(...from) {
     return yamlMerge(files[0], files[1]);
 }
 
-module.exports = {yamlMerge, readAsJSON, cleanupOpenAPI};
+
+module.exports = {yamlMerge, readAsJSON, cleanupOpenAPI, logger};
