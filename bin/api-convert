@@ -4,16 +4,28 @@
 const resolve = require('path').resolve;
 const fs = require('fs');
 
+const logger = require('winston')
+
 const apiSpecConverter = require('api-spec-converter');
+
+
+const files = process.argv
+    .slice(2)
+    .map((path) => resolve(path));
+
 // convert from endpoint
 apiSpecConverter.convert({
     from: 'openapi_3',
     to: 'swagger_2',
-    source: 'http://localhost:8080/v3/api-docs',
+    // source: 'http://localhost:8080/v3/api-docs',
+    source: files[0]
 
-}).then(function (converted) {
+}).then(function (convertedJson) {
+        // logger.info(JSON.parse(JSON.stringify(convertedJson))['message'])
+
+
     //then write result to file
-    fs.writeFile('converted_swagger_v2.0.yaml', JSON.stringify(converted), function (err) {
+    fs.writeFile('converted_swagger_v2.0.yaml', JSON.stringify(convertedJson.definitions), function (err) {
         if (err) return console.log(err);
         console.log(`OutputFile ${JSON.stringify(converted)}`);
     });

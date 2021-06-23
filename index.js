@@ -2,7 +2,7 @@
 const winston = require('winston');
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.cli(),
+  format: winston.format.json(),
 //  defaultMeta: { service: 'user-service' },
   transports: [
     //
@@ -62,4 +62,4 @@ function yamlMergeFromPath(...from) {
   return yamlMerge(files[0], files[1]);
 }
 
-module.exports = yamlMerge;
+module.exports = {yamlMerge, cleanupOpenAPI};
