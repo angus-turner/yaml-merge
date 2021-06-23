@@ -26,32 +26,21 @@ function readAsJSON(fileName) {
   return jsYaml.load(fileString);
 }
 
-/**
- * Merge the given YAML file names into a single YAML document
- *
- * @param {array} from the file paths to read from
- * @return {string} the output YAML file
- */
-function yamlMerge(...from) {
-  const files = from.map((path) => readAsJSON(path));
+function cleanupOpenAPI(filename) {
+  const base = readAsJSON(filename);
+  return base.definitions;
+}
+
+function yamlMerge(doc1, doc2) {
   const outputJSON = _.mergeWith(files[0],files[1], (objValue, srcValue) => {
 
 
     if (Array.isArray(objValue) && Array.isArray(srcValue)) {
-      logger.info('srcValue')
-      logger.info(srcValue)
-      logger.info('objValue')
-      logger.info(objValue)
 
         const newArray = srcValue.filter(item => {
-          logger.info(item);
-          logger.info(objValue);
-          logger.info(objValue.indexOf(item)==-1);
           return objValue.indexOf(item)==-1;
         })
 
-        logger.info(newArray);
-        
       return [...objValue, ...newArray].sort();
     }
 
@@ -60,6 +49,17 @@ function yamlMerge(...from) {
   });
 
   return jsYaml.dump(outputJSON);
+}
+
+/**
+ * Merge the given YAML file names into a single YAML document
+ *
+ * @param {array} from the file paths to read from
+ * @return {string} the output YAML file
+ */
+function yamlMergeFromPath(...from) {
+  const files = from.map((path) => readAsJSON(path));
+  return yamlMerge(files[0], files[1]);
 }
 
 module.exports = yamlMerge;

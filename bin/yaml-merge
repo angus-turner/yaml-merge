@@ -3,13 +3,21 @@
 'use strict';
 const resolve = require('path').resolve;
 const yamlMerge = require('../index.js');
+const apiConverter = require('api-spec-converter');
 const fs = require('fs');
 
 
 const files = process.argv
     .slice(2)
     .map((path) => resolve(path));
-const outputFile = yamlMerge(...files);
+
+const convertedFile = apiSpecConverter.convert({
+    from: 'openapi_3',
+    to: 'swagger_2',
+    source: files[1],
+});
+
+const outputFile = yamlMerge(files[0], cleanupOpenAPI(convertedFile));
 
 fs.writeFile('result.yaml', outputFile, function (err) {
     if (err) return console.log(err);
