@@ -1,5 +1,9 @@
 'use strict';
 const winston = require('winston');
+/**
+ * winston logger config
+ * @type {winston.Logger}
+ */
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
@@ -19,6 +23,11 @@ const readFileSync = require('fs').readFileSync;
 const jsYaml = require('js-yaml');
 const _ = require('lodash');
 
+/**
+ * read yaml file as a json object
+ * @param fileName
+ * @returns {*|string}
+ */
 function readAsJSON(fileName) {
     logger.info(fileName)
     const fileBuffer = readFileSync(fileName);
@@ -27,11 +36,22 @@ function readAsJSON(fileName) {
     return jsYaml.load(fileString);
 }
 
+/**
+ * remove all references of xml from json object
+ * @param swaggerVersion2
+ * @returns {*}
+ */
 function cleanupOpenAPI(swaggerVersion2) {
     return deepOmit({"definitions": swaggerVersion2.spec.definitions}, 'xml');
     // return {"definitions": swaggerVersion2.spec.definitions};
 }
 
+/**
+ * recursive method to remove obj with given keys from provided json
+ * @param obj
+ * @param keysToOmit
+ * @returns {*}
+ */
 function deepOmit(obj, keysToOmit) {
     let keysToOmitIndex = _.keyBy(Array.isArray(keysToOmit) ? keysToOmit : [keysToOmit]); // create an index object of the keys that should be omitted
 
@@ -47,7 +67,14 @@ function deepOmit(obj, keysToOmit) {
     return omitFromObject(obj); // return the inner function result
 }
 
-
+/**
+ * ripped off function for merging yaml files
+ * removes duplicate values form yaml lists
+ * sorts the yaml list.
+ * @param doc1
+ * @param doc2
+ * @returns {string}
+ */
 function yamlMerge(doc1, doc2) {
     const outputJSON = _.mergeWith(doc1, doc2, (objValue, srcValue) => {
         if (Array.isArray(objValue) && Array.isArray(srcValue)) {

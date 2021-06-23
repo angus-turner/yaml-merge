@@ -13,7 +13,7 @@ const files = process.argv
     .slice(2)
     .map((path) => resolve(path));
 
-// convert from endpoint
+// convert swagger
 apiSpecConverter.convert({
     from: 'openapi_3',
     to: 'swagger_2',
@@ -22,22 +22,24 @@ apiSpecConverter.convert({
 
 }).then(function (convertedJson) {
 
+    // remove xml tags and only select definitions
+    // merge updated definitions with original swagger file
     const mergedFile = index.yamlMerge(index.readAsJSON(files[1]), index.cleanupOpenAPI(convertedJson))
 
+    // sort updated merged file
     apiSpecConverter.convert({
         from: 'swagger_2',
         to: 'swagger_2',
         source: jsYaml.load(mergedFile)
     }).then(function (sortedFile) {
         let options = {syntax: 'yaml', order: 'openapi'}
-
+        // write sorted to a file
         fs.writeFile('result.yaml', sortedFile.stringify(options), function (err) {
             if (err) return index.logger.error(err);
             index.logger.info('OutputFile' + sortedFile);
         })
     })
-
-})
+});
 
 
 
