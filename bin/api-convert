@@ -3,36 +3,39 @@
 'use strict';
 const resolve = require('path').resolve;
 const fs = require('fs');
-
 const logger = require('winston')
-
 const apiSpecConverter = require('api-spec-converter');
-
+const index = require('../index.js');
+const {readAsJSON} = require("../index");
 
 const files = process.argv
     .slice(2)
     .map((path) => resolve(path));
 
+
 // convert from endpoint
-apiSpecConverter.convert({
+const converted = apiSpecConverter.convert({
     from: 'openapi_3',
     to: 'swagger_2',
     // source: 'http://localhost:8080/v3/api-docs',
     source: files[0]
 
 }).then(function (convertedJson) {
-        // logger.info(JSON.parse(JSON.stringify(convertedJson))['message'])
-
-
-    //then write result to file
-    fs.writeFile('converted_swagger_v2.0.yaml', JSON.stringify(convertedJson.definitions), function (err) {
-        if (err) return console.log(err);
-        console.log(`OutputFile ${JSON.stringify(converted)}`);
-    });
+    return index.cleanupOpenAPI(convertedJson)
 });
 
-//TODO: maybe combine the api convert & yaml merge.. but are we disecting the converted swagger before merging?
-// - if so any logic to it?
+merge(converted, files)
+
+function merge(converted, files) {
+
+    const outputFile = index.yamlMerge(converted, index.readAsJSON(files[1]))
+
+    fs.writeFile('result.yaml', outputFile, function (err) {
+        if (err) return console.log(err);
+        console.log(`OutputFile ${outputFile}`);
+    });
+}
+
 
 
 
